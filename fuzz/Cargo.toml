@@ -1,0 +1,48 @@
+[package]
+name = "scanapp-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+image = { version = "0.25", default-features = false, features = ["png", "tiff"] }
+anyhow = "1"
+
+[dependencies.scanapp]
+path = ".."
+
+[[bin]]
+name = "row_assembler"
+path = "fuzz_targets/row_assembler.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "thumbnail"
+path = "fuzz_targets/thumbnail.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "job"
+path = "fuzz_targets/job.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "pipeline"
+path = "fuzz_targets/pipeline.rs"
+test = false
+doc = false
+bench = false
+
+[profile.release.build-override]
+debug-assertions = true

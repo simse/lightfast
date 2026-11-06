@@ -1,0 +1,20 @@
+[package]
+name = "scan-usb"
+version = "0.1.0"
+edition = "2024"
+description = "USB transport for scanner drivers: real devices through nusb, or SANE USB recordings replayed."
+license = "GPL-2.0-or-later WITH SANE-exception"
+publish = false
+
+[features]
+default = ["hardware"]
+# Real devices through `nusb`. Without it only replay is available.
+hardware = ["dep:nusb"]
+
+[dependencies]
+log = { version = "0.4.34", features = ["kv"] }
+nusb = { version = "0.2.9", optional = true }
+roxmltree = "0.21.2"
+
+[lints]
+workspace = true

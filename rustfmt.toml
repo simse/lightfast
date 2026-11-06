@@ -1,0 +1,3 @@
+# Matches the line length the code base was written with.
+max_width = 120
+use_small_heuristics = "Max"

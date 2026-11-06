@@ -1,0 +1,4 @@
+<key>NSHighResolutionCapable</key>
+<true/>
+<key>NSLocalNetworkUsageDescription</key>
+<string>ScanApp looks for network scanners on your local network.</string>

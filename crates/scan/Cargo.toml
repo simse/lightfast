@@ -1,0 +1,20 @@
+[package]
+name = "scan"
+version = "0.1.0"
+edition = "2024"
+description = "Scanner registry: finds attached scanners and opens them with the right backend."
+license = "GPL-2.0-or-later WITH SANE-exception"
+publish = false
+
+[dependencies]
+log = { version = "0.4.34", features = ["kv"] }
+scan-core = { path = "../scan-core" }
+scan-pixma = { path = "../scan-pixma" }
+scan-usb = { path = "../scan-usb" }
+
+[dev-dependencies]
+anyhow = "1.0.104"
+env_logger = "0.11.11"
+
+[lints]
+workspace = true

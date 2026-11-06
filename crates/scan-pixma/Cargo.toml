@@ -1,0 +1,20 @@
+[package]
+name = "scan-pixma"
+version = "0.1.0"
+edition = "2024"
+description = "Canon PIXMA / CanoScan LiDE driver, ported from SANE's pixma backend (mp150 subdriver)."
+# A port of SANE's pixma backend, which is GPL-2.0-or-later with the SANE
+# linking exception; the port keeps both.
+license = "GPL-2.0-or-later WITH SANE-exception"
+publish = false
+
+[dependencies]
+log = { version = "0.4.34", features = ["kv"] }
+scan-core = { path = "../scan-core" }
+scan-usb = { path = "../scan-usb", default-features = false }
+
+[dev-dependencies]
+scan-usb = { path = "../scan-usb", default-features = false }
+
+[lints]
+workspace = true
