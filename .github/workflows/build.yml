@@ -1,0 +1,73 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    # The app targets macOS 27, so build against the Xcode 27 image.
+    runs-on: xcode-27
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Pinned because a toolchain change invalidates the whole cargo cache.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: 1.98.1
+
+      # Caches the registry, compiled dependencies and ~/.cargo/bin. Only main
+      # saves, so pull requests reuse its cache without evicting it.
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          save-if: ${{ github.ref == 'refs/heads/main' }}
+
+      - name: Install cargo-bundle
+        run: cargo bundle --version >/dev/null 2>&1 || cargo install cargo-bundle --version 0.12.0 --locked
+
+      # cargo-bundle signs from the .p12 file; package.sh looks up the identity
+      # in the keychain for the DMG.
+      - name: Import signing certificate
+        env:
+          SCANAPP_P12_BASE64: ${{ secrets.SCANAPP_P12_BASE64 }}
+          SCANAPP_P12_PASSWORD: ${{ secrets.SCANAPP_P12_PASSWORD }}
+        run: |
+          umask 077
+          mkdir -p signing
+          base64 --decode <<<"$SCANAPP_P12_BASE64" > signing/developer-id.p12
+
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          keychain_password="$(openssl rand -hex 32)"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import signing/developer-id.p12 -k "$keychain" -f pkcs12 \
+            -P "$SCANAPP_P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s \
+            -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" login.keychain-db
+
+      - name: Build signed DMG
+        env:
+          SCANAPP_P12_PASSWORD: ${{ secrets.SCANAPP_P12_PASSWORD }}
+          SKIP_NOTARIZE: "1"
+        run: scripts/macos/package.sh
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ScanApp-${{ github.sha }}
+          path: target/release/bundle/dmg/ScanApp.dmg
+          if-no-files-found: error
+          retention-days: 14
