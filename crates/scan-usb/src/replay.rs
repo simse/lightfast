@@ -175,7 +175,11 @@ impl Replay {
         }
         // Descriptor requests made while opening are the transport's job
         // (the OS caches them), not the driver's, so they are consumed here.
-        let leading = transactions.iter().take_while(|t| matches!(t.kind, Kind::Control { .. })).count();
+        // Vendor and class requests are the driver's own traffic.
+        let leading = transactions
+            .iter()
+            .take_while(|t| matches!(t.kind, Kind::Control { request_type, .. } if request_type & 0x60 == 0))
+            .count();
         let serial = serial_from_descriptors(&transactions[..leading]);
         Ok(Self { ids: DeviceIds { vendor_id, product_id, serial }, transactions, next: leading })
     }
@@ -252,6 +256,41 @@ impl UsbTransport for Replay {
         self.read(Kind::InterruptIn, "interrupt read", buf)
     }
 
+    fn control_in(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &mut [u8],
+        _timeout: Duration,
+    ) -> Result<usize> {
+        let kind = Kind::Control { request_type, request, value, index };
+        self.read(kind, "control read", buf)
+    }
+
+    fn control_out(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        data: &[u8],
+        _timeout: Duration,
+    ) -> Result<usize> {
+        let kind = Kind::Control { request_type, request, value, index };
+        let t = self.take(kind, || describe("control write", data))?;
+        match t.data {
+            Some(expected) if expected == data => Ok(data.len()),
+            Some(expected) => Err(Error::Replay(ReplayError::Mismatch {
+                seq: t.seq,
+                expected: describe("control write", &expected),
+                got: describe("control write", data),
+            })),
+            None => Err(Error::Timeout),
+        }
+    }
+
     fn sleep(&mut self, _duration: Duration) {}
 }
 
@@ -303,6 +342,26 @@ mod tests {
         r.bulk_out(&[0xdb, 0x20, 0, 0], t).unwrap();
         let err = r.bulk_in(&mut [0; 2], t).unwrap_err();
         assert!(matches!(err, Error::Replay(ReplayError::Mismatch { seq: 5, .. })), "short buffer: {err}");
+    }
+
+    #[test]
+    fn vendor_control_transfers_are_the_drivers_traffic() {
+        let xml = r#"<device_capture><description id_vendor="0x1" id_product="0x2"/><transactions>
+            <control_tx seq="1" direction="IN" bmRequestType="0x80" bRequest="0x06" wValue="0x0100" wIndex="0" wLength="0x12">12 01</control_tx>
+            <control_tx seq="2" direction="OUT" bmRequestType="0x40" bRequest="0x0c" wValue="0x87" wIndex="0x10" wLength="1">05</control_tx>
+            <control_tx seq="3" direction="IN" bmRequestType="0xc0" bRequest="0x0c" wValue="0x07" wIndex="0x00" wLength="1">aa</control_tx>
+        </transactions></device_capture>"#;
+        let t = Duration::from_secs(1);
+        let mut r = Replay::parse(xml).unwrap();
+        assert_eq!(r.remaining(), 2);
+        assert!(r.control_out(0x40, 0x0c, 0x88, 0x10, &[5], t).is_err(), "wrong wValue must not match");
+        let mut r = Replay::parse(xml).unwrap();
+        assert!(r.control_out(0x40, 0x0c, 0x87, 0x10, &[6], t).is_err(), "wrong payload must not match");
+        let mut r = Replay::parse(xml).unwrap();
+        r.control_out(0x40, 0x0c, 0x87, 0x10, &[5], t).unwrap();
+        let mut b = [0];
+        assert_eq!(r.control_in(0xc0, 0x0c, 0x07, 0, &mut b, t).unwrap(), 1);
+        assert_eq!(b, [0xaa]);
     }
 
     #[test]

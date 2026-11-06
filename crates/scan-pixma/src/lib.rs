@@ -47,6 +47,14 @@ fn fixed(v: f64) -> f64 {
     f64::from((v * 65536.0) as i32) / 65536.0
 }
 
+/// This backend, for the registry.
+pub const DRIVER: scan_usb::UsbDriver = scan_usb::UsbDriver {
+    name: BACKEND,
+    find: |vid, pid| models::find(vid, pid).map(|m| scan_usb::UsbModel { vendor: "CANON", model: m.name }),
+    open: |transport| Ok(Box::new(Pixma::open(transport)?)),
+    interface: 0,
+};
+
 /// Whether `vid`:`pid` is a scanner this driver supports.
 #[must_use]
 pub fn supports(vid: u16, pid: u16) -> bool {

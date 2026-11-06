@@ -1,0 +1,16 @@
+[package]
+name = "scan-dell1600n-net"
+version = "0.1.0"
+edition = "2024"
+description = "Dell 1600n network scanner driver, ported from SANE's dell1600n_net backend. Untested on real hardware."
+license = "GPL-2.0-or-later WITH SANE-exception"
+publish = false
+
+[dependencies]
+fax = "0.2.7"
+scan-core = { path = "../scan-core" }
+zune-core = "0.5.3"
+zune-jpeg = "0.5.15"
+
+[lints]
+workspace = true

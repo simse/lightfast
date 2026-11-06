@@ -14,6 +14,7 @@ hardware = ["dep:nusb"]
 [dependencies]
 log = { version = "0.4.34", features = ["kv"] }
 nusb = { version = "0.2.9", optional = true }
+scan-core = { path = "../scan-core" }
 roxmltree = "0.21.2"
 
 [lints]
