@@ -6,4 +6,6 @@ pub mod menu;
 mod preview;
 pub mod theme;
 
-pub use app_view::{AppView, DeleteFrame, MultipleAreaMode, Quit, SingleAreaMode, ZoomIn, ZoomOut, ZoomToFit};
+pub use app_view::{
+    AppView, CheckForUpdates, DeleteFrame, MultipleAreaMode, Quit, SingleAreaMode, ZoomIn, ZoomOut, ZoomToFit,
+};

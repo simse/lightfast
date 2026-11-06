@@ -5,8 +5,8 @@ self-contained, Developer ID signed, notarized and stapled.
 
 ## What the bundle contains
 
-Just the `scanapp` executable. Scanner drivers are the pure-Rust crates in `crates/`
-(`scan-pixma` over `nusb`, which talks to IOKit directly), so there are no dylibs,
+The `scanapp` executable and `Sparkle.framework`. Scanner drivers are the pure-Rust crates
+in `crates/` (`scan-pixma` over `nusb`, which talks to IOKit directly), so there are no
 backend plugins or config files to bundle, and users need nothing installed.
 
 **Platform:** Apple Silicon, macOS 27+ (`minimum_system_version` in `Cargo.toml`).
@@ -31,17 +31,59 @@ backend plugins or config files to bundle, and users need nothing installed.
    ```
    Your Team ID is at <https://developer.apple.com/account> → Membership details.
 
-## Building a release
+## Publishing a release
+
+Tag a commit on `main` and push the tag:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+CI builds the DMG with that version, then publishes a GitHub release with
+`ScanApp-0.1.0.dmg` and `appcast.xml` attached. Installed apps read the appcast from the
+latest release, so publishing is what offers them the update. Only plain `vX.Y.Z` tags
+release.
+
+The tag is the source of truth for the version: CI rewrites `version` in `Cargo.toml` before
+building, and the committed value only applies to untagged builds.
+
+## Building locally
 
 ```sh
 export SCANAPP_P12_PASSWORD=...           # e.g. from your password manager
 scripts/macos/package.sh                  # SKIP_NOTARIZE=1 to stop after signing
 ```
 
+`SCANAPP_VERSION=0.1.0` sets the version, and leaves `Cargo.toml` modified.
+
+## Updates
+
+Sparkle fetches its feed from `SUFeedURL` in `scripts/macos/Info.plist.ext`, and only accepts
+updates signed by the private key matching `SUPublicEDKey`.
+
+**Back up the private key.** It lives in the login Keychain of the Mac that created it, under
+the Sparkle account `scanapp`, and in the `SPARKLE_ED_PRIVATE_KEY` secret, which can't be read
+back. If it is lost, installed apps can't accept any further update. To export it, using
+`generate_keys` from `target/sparkle/bin` after a build:
+
+```sh
+generate_keys --account scanapp -x scanapp-sparkle.key   # store it somewhere safe, then delete it
+```
+
+**Versions.** cargo-bundle sets `CFBundleVersion` to the build's timestamp, and Sparkle compares
+that value, not the marketing version, to decide what is newer. `generate_appcast` copies it
+from the built app, so the build most recently tagged wins, whatever its version number says.
+
+**Feed URL.** The URL depends on this repository's name and on it being public, since Sparkle
+can't authenticate to GitHub. Renaming the repository leaves installed apps relying on GitHub's
+redirect.
+
 ## CI
 
 `.github/workflows/build.yml` builds a signed, notarized and stapled DMG on every push to
-`main` and every pull request, and uploads it as a workflow artifact.
+`main`, every pull request and every version tag, and uploads it as a workflow artifact. Version
+tags also publish the release.
 
 It needs these repository secrets:
 
@@ -50,6 +92,7 @@ It needs these repository secrets:
 - `SCANAPP_NOTARY_KEY_BASE64`: an App Store Connect API key, `base64 -i AuthKey_XXXXXXXXXX.p8 | tr -d '\n' | gh secret set SCANAPP_NOTARY_KEY_BASE64`
 - `SCANAPP_NOTARY_KEY_ID`: that key's ID
 - `SCANAPP_NOTARY_ISSUER_ID`: the issuer ID shown above the list of keys
+- `SPARKLE_ED_PRIVATE_KEY`: the exported Sparkle key, `gh secret set SPARKLE_ED_PRIVATE_KEY < scanapp-sparkle.key`
 
 ## Notes
 
