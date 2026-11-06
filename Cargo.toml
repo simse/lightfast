@@ -35,6 +35,8 @@ apple_signing_entitlements = "scripts/macos/entitlements.plist"
 [package.metadata.bundle.osx]
 minimum_system_version = "27.0"
 info_plist_exts = ["scripts/macos/Info.plist.ext"]
+# Fetched by `scripts/macos/package.sh`, which also signs it.
+frameworks = ["target/sparkle/Sparkle.framework"]
 
 [dependencies]
 anyhow = "1.0.104"
@@ -58,7 +60,7 @@ tiff = "0.11.3"
 objc2 = "0.6.5"
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSResponder", "NSView", "NSWindow", "NSGraphics", "NSAppearance", "NSButton", "NSButtonCell", "NSCell", "NSControl", "NSGlassEffectView", "NSLayoutConstraint", "NSMenu", "NSMenuItem", "NSPopUpButton", "NSSegmentedControl", "NSSlider", "NSVisualEffectView", "objc2-core-foundation", "objc2-quartz-core"] }
 objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFCGTypes"] }
-objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSString"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSBundle", "NSString"] }
 objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGColor", "CGPath"] }
 objc2-quartz-core = { version = "0.3.2", default-features = false, features = ["std", "CALayer", "CAShapeLayer", "CATransaction", "objc2-core-foundation", "objc2-core-graphics"] }
 raw-window-handle = "0.6.2"

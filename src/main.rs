@@ -1,6 +1,7 @@
 //! `ScanApp`: a flatbed photo/art scanner.
 
 mod ui;
+mod updater;
 
 /// mimalloc handles the large, short-lived row batches of multi-gigabyte
 /// scans better than the system allocator (M-MIMALLOC-APPS).
@@ -15,6 +16,7 @@ use gpui_component::{Root, TitleBar};
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    log::info!(version = env!("CARGO_PKG_VERSION"); "starting ScanApp");
     gpui_platform::application().run(|cx| {
         gpui_component::init(cx);
         ui::glass::init(cx);
@@ -31,6 +33,8 @@ fn main() {
             KeyBinding::new("cmd-q", ui::Quit, None),
         ]);
         cx.on_action(|_: &ui::Quit, cx| cx.quit());
+        cx.on_action(|_: &ui::CheckForUpdates, cx| updater::check(cx));
+        updater::init(cx);
         ui::menu::set(cx, false);
         let bounds = Bounds::centered(None, size(px(1100.0), px(820.0)), cx);
         let glass = ui::glass::active(cx);

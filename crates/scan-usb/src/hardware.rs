@@ -4,7 +4,9 @@ use std::time::Duration;
 
 use nusb::MaybeFuture as _;
 use nusb::descriptors::TransferType;
-use nusb::transfer::{Buffer, Bulk, Direction, In, Interrupt, Out, TransferError};
+use nusb::transfer::{
+    Buffer, Bulk, ControlIn, ControlOut, ControlType, Direction, In, Interrupt, Out, Recipient, TransferError,
+};
 use nusb::{Endpoint, Interface};
 
 use crate::{DeviceIds, Error, Result, UsbTransport};
@@ -80,8 +82,9 @@ pub struct NusbTransport {
     bulk_out: Endpoint<Bulk, Out>,
     bulk_in: Endpoint<Bulk, In>,
     interrupt_in: Option<Endpoint<Interrupt, In>>,
+    device: nusb::Device,
     // Dropped last: releasing the interface closes the endpoints' pipes.
-    _interface: Interface,
+    interface: Interface,
 }
 
 impl std::fmt::Debug for NusbTransport {
@@ -116,8 +119,24 @@ impl NusbTransport {
             Some(a) => Some(iface.endpoint::<Interrupt, In>(a).map_err(|e| Error::Io(e.to_string()))?),
             None => None,
         };
-        Ok(Self { ids: device.ids.clone(), bulk_out, bulk_in, interrupt_in, _interface: iface })
+        Ok(Self { ids: device.ids.clone(), bulk_out, bulk_in, interrupt_in, device: dev, interface: iface })
     }
+}
+
+/// The type and recipient fields of a `bmRequestType`.
+fn control_fields(request_type: u8) -> (ControlType, Recipient) {
+    let control_type = match (request_type >> 5) & 3 {
+        0 => ControlType::Standard,
+        1 => ControlType::Class,
+        _ => ControlType::Vendor,
+    };
+    let recipient = match request_type & 0x1f {
+        0 => Recipient::Device,
+        1 => Recipient::Interface,
+        2 => Recipient::Endpoint,
+        _ => Recipient::Other,
+    };
+    (control_type, recipient)
 }
 
 /// Reads one transfer of up to `buf.len()` bytes from `ep`.
@@ -163,5 +182,57 @@ impl UsbTransport for NusbTransport {
         }
         std::thread::sleep(timeout);
         Err(Error::Timeout)
+    }
+
+    fn control_in(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &mut [u8],
+        timeout: Duration,
+    ) -> Result<usize> {
+        let (control_type, recipient) = control_fields(request_type);
+        let length = u16::try_from(buf.len()).map_err(|_| Error::Io("control transfer too long".into()))?;
+        let request = ControlIn { control_type, recipient, request, value, index, length };
+        let data = self.interface.control_in(request, timeout).wait().map_err(map_transfer_error)?;
+        let n = data.len().min(buf.len());
+        buf[..n].copy_from_slice(&data[..n]);
+        Ok(n)
+    }
+
+    fn control_out(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        data: &[u8],
+        timeout: Duration,
+    ) -> Result<usize> {
+        let (control_type, recipient) = control_fields(request_type);
+        let request = ControlOut { control_type, recipient, request, value, index, data };
+        self.interface.control_out(request, timeout).wait().map_err(map_transfer_error)?;
+        Ok(data.len())
+    }
+
+    fn clear_halt(&mut self) -> Result<()> {
+        self.bulk_out.clear_halt().wait().map_err(|e| map_os_error(&e))?;
+        self.bulk_in.clear_halt().wait().map_err(|e| map_os_error(&e))
+    }
+
+    fn reset(&mut self) -> Result<()> {
+        self.device.reset().wait().map_err(|e| map_os_error(&e))
+    }
+
+    fn set_bulk_endpoints(&mut self, bulk_out: Option<u8>, bulk_in: Option<u8>) -> Result<()> {
+        if let Some(address) = bulk_out {
+            self.bulk_out = self.interface.endpoint::<Bulk, Out>(address).map_err(|e| Error::Io(e.to_string()))?;
+        }
+        if let Some(address) = bulk_in {
+            self.bulk_in = self.interface.endpoint::<Bulk, In>(address).map_err(|e| Error::Io(e.to_string()))?;
+        }
+        Ok(())
     }
 }

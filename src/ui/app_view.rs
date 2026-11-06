@@ -25,7 +25,7 @@ use super::menu;
 use super::preview::{MAX_ZOOM, MIN_ZOOM, Preview};
 use super::theme::CanvasColors;
 
-actions!(scanapp, [ZoomIn, ZoomOut, ZoomToFit, SingleAreaMode, MultipleAreaMode, DeleteFrame, Quit]);
+actions!(scanapp, [ZoomIn, ZoomOut, ZoomToFit, SingleAreaMode, MultipleAreaMode, DeleteFrame, Quit, CheckForUpdates]);
 
 /// Bed size used for the outline before a scanner is found (A4).
 const DEFAULT_BED: (f64, f64) = (216.0, 297.0);

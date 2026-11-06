@@ -7,18 +7,21 @@
 //!
 //! The transfer model is the one SANE's `sanei_usb` exposes, since that is
 //! what the recordings capture: one bulk-out, one bulk-in and one interrupt-in
-//! endpoint on the device's first interface, plus control transfers for
-//! descriptors.
+//! endpoint on one interface, plus control transfers. [`mock::Mock`] is a
+//! scriptable device for testing drivers no recording exists for yet.
 
 #![forbid(unsafe_code)]
 
+mod driver;
 #[cfg(feature = "hardware")]
 mod hardware;
+pub mod mock;
 mod replay;
 
 use std::fmt;
 use std::time::Duration;
 
+pub use driver::{UsbDriver, UsbModel};
 #[cfg(feature = "hardware")]
 pub use hardware::{NusbTransport, UsbDeviceInfo, list_devices};
 pub use replay::{Replay, ReplayError};
@@ -58,6 +61,19 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
+impl From<Error> for scan_core::Error {
+    fn from(e: Error) -> Self {
+        use scan_core::ErrorKind;
+        let kind = match e {
+            Error::Timeout => ErrorKind::Timeout,
+            Error::Disconnected | Error::NotFound => ErrorKind::NotFound,
+            Error::Access(_) => ErrorKind::Access,
+            Error::Stall | Error::Io(_) | Error::Replay(_) => ErrorKind::Io,
+        };
+        Self::new(kind, e.to_string())
+    }
+}
+
 /// Result type for transfers.
 pub type Result<T> = std::result::Result<T, Error>;
 
@@ -95,6 +111,59 @@ pub trait UsbTransport: Send + fmt::Debug {
     /// # Errors
     /// [`Error::Timeout`] if no packet arrived in time.
     fn interrupt_in(&mut self, buf: &mut [u8], timeout: Duration) -> Result<usize>;
+
+    /// Reads a control transfer into `buf`; returns the bytes read.
+    ///
+    /// # Errors
+    /// Fails on timeout, a stall, or any transfer error.
+    fn control_in(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &mut [u8],
+        timeout: Duration,
+    ) -> Result<usize>;
+
+    /// Sends a control transfer; returns the bytes written.
+    ///
+    /// # Errors
+    /// Fails on timeout, a stall, or any transfer error.
+    fn control_out(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        data: &[u8],
+        timeout: Duration,
+    ) -> Result<usize>;
+
+    /// `sanei_usb_clear_halt`: clears a stall on the bulk endpoints.
+    ///
+    /// # Errors
+    /// Fails if the OS rejects the request.
+    fn clear_halt(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    /// `sanei_usb_reset`: resets the device.
+    ///
+    /// # Errors
+    /// Fails if the OS rejects the request.
+    fn reset(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    /// `sanei_usb_set_endpoint`: overrides the automatically chosen bulk
+    /// endpoints, for devices whose descriptors mislead. `None` keeps one.
+    ///
+    /// # Errors
+    /// Fails if the interface has no such endpoint.
+    fn set_bulk_endpoints(&mut self, _bulk_out: Option<u8>, _bulk_in: Option<u8>) -> Result<()> {
+        Ok(())
+    }
 
     /// Waits `duration`, for drivers that pace the device. Replay skips it.
     fn sleep(&mut self, duration: Duration) {

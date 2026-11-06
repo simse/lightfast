@@ -2,3 +2,7 @@
 <true/>
 <key>NSLocalNetworkUsageDescription</key>
 <string>ScanApp looks for network scanners on your local network.</string>
+<key>SUFeedURL</key>
+<string>https://github.com/simse/silverlight/releases/latest/download/appcast.xml</string>
+<key>SUPublicEDKey</key>
+<string>QS5qoA/vpWlcrILWh6o1SifzNgNqvFTep7Uet7AmIy4=</string>

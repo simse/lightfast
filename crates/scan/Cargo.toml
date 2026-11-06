@@ -6,11 +6,23 @@ description = "Scanner registry: finds attached scanners and opens them with the
 license = "GPL-2.0-or-later WITH SANE-exception"
 publish = false
 
+[features]
+# Enables backends whose C source has no SANE linking exception. Linking them
+# makes the whole program GPL, so this stays off by default. None are ported yet.
+gpl-backends = []
+
 [dependencies]
 log = { version = "0.4.34", features = ["kv"] }
 scan-core = { path = "../scan-core" }
 scan-pixma = { path = "../scan-pixma" }
 scan-usb = { path = "../scan-usb" }
+scan-hpljm1005 = { path = "../scan-hpljm1005" }
+scan-ricoh2 = { path = "../scan-ricoh2" }
+scan-lexmark-x2600 = { path = "../scan-lexmark-x2600" }
+scan-cardscan = { path = "../scan-cardscan" }
+scan-ma1509 = { path = "../scan-ma1509" }
+scan-xerox-mfp = { path = "../scan-xerox-mfp" }
+scan-dell1600n-net = { path = "../scan-dell1600n-net" }
 
 [dev-dependencies]
 anyhow = "1.0.104"

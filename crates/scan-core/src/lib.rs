@@ -13,6 +13,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod driver;
+
 use std::fmt;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -291,7 +293,9 @@ pub struct Parameters {
     pub pixels_per_line: usize,
     /// Bytes per row, including any padding.
     pub bytes_per_line: usize,
-    /// Rows in the frame.
+    /// Rows in the frame. For scanners that only know a page's length once it
+    /// has passed (SANE's `lines = -1`, typical of sheet feeders), this is an
+    /// upper bound and [`Device::read`] may end the frame sooner.
     pub lines: usize,
 }
 

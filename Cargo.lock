@@ -5448,14 +5448,63 @@ dependencies = [
  "anyhow",
  "env_logger",
  "log",
+ "scan-cardscan",
  "scan-core",
+ "scan-dell1600n-net",
+ "scan-hpljm1005",
+ "scan-lexmark-x2600",
+ "scan-ma1509",
  "scan-pixma",
+ "scan-ricoh2",
+ "scan-usb",
+ "scan-xerox-mfp",
+]
+
+[[package]]
+name = "scan-cardscan"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
  "scan-usb",
 ]
 
 [[package]]
 name = "scan-core"
 version = "0.1.0"
+
+[[package]]
+name = "scan-dell1600n-net"
+version = "0.1.0"
+dependencies = [
+ "fax",
+ "scan-core",
+ "zune-core 0.5.3",
+ "zune-jpeg 0.5.15",
+]
+
+[[package]]
+name = "scan-hpljm1005"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
+ "scan-usb",
+]
+
+[[package]]
+name = "scan-lexmark-x2600"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
+ "scan-usb",
+]
+
+[[package]]
+name = "scan-ma1509"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
+ "scan-usb",
+]
 
 [[package]]
 name = "scan-pixma"
@@ -5467,12 +5516,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "scan-ricoh2"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
+ "scan-usb",
+]
+
+[[package]]
 name = "scan-usb"
 version = "0.1.0"
 dependencies = [
  "log",
  "nusb",
  "roxmltree 0.21.2",
+ "scan-core",
+]
+
+[[package]]
+name = "scan-xerox-mfp"
+version = "0.1.0"
+dependencies = [
+ "scan-core",
+ "scan-usb",
+ "zune-core 0.5.3",
+ "zune-jpeg 0.5.15",
 ]
 
 [[package]]

@@ -1,0 +1,14 @@
+[package]
+name = "scan-hpljm1005"
+version = "0.1.0"
+edition = "2024"
+description = "HP LaserJet M1005 / M1120 driver, ported from SANE's hpljm1005 backend. Untested on real hardware."
+license = "GPL-2.0-or-later WITH SANE-exception"
+publish = false
+
+[dependencies]
+scan-core = { path = "../scan-core" }
+scan-usb = { path = "../scan-usb", default-features = false }
+
+[lints]
+workspace = true
