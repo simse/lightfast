@@ -59,10 +59,25 @@ jobs:
             -k "$keychain_password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" login.keychain-db
 
-      - name: Build signed DMG
+      # package.sh reads the scanapp-notary profile from the default keychain.
+      - name: Store notary credentials
+        env:
+          SCANAPP_NOTARY_KEY_BASE64: ${{ secrets.SCANAPP_NOTARY_KEY_BASE64 }}
+          SCANAPP_NOTARY_KEY_ID: ${{ secrets.SCANAPP_NOTARY_KEY_ID }}
+          SCANAPP_NOTARY_ISSUER_ID: ${{ secrets.SCANAPP_NOTARY_ISSUER_ID }}
+        run: |
+          umask 077
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          key="$RUNNER_TEMP/notary-key.p8"
+          base64 --decode <<<"$SCANAPP_NOTARY_KEY_BASE64" > "$key"
+          security default-keychain -d user -s "$keychain"
+          xcrun notarytool store-credentials scanapp-notary --keychain "$keychain" \
+            --key "$key" --key-id "$SCANAPP_NOTARY_KEY_ID" --issuer "$SCANAPP_NOTARY_ISSUER_ID"
+          rm -f "$key"
+
+      - name: Build notarized DMG
         env:
           SCANAPP_P12_PASSWORD: ${{ secrets.SCANAPP_P12_PASSWORD }}
-          SKIP_NOTARIZE: "1"
         run: scripts/macos/package.sh
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

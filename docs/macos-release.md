@@ -40,13 +40,16 @@ scripts/macos/package.sh                  # SKIP_NOTARIZE=1 to stop after signin
 
 ## CI
 
-`.github/workflows/build.yml` builds a signed DMG on every push to `main` and every pull
-request, and uploads it as a workflow artifact. CI builds are not notarized.
+`.github/workflows/build.yml` builds a signed, notarized and stapled DMG on every push to
+`main` and every pull request, and uploads it as a workflow artifact.
 
-It needs two repository secrets:
+It needs these repository secrets:
 
 - `SCANAPP_P12_BASE64`: `base64 -i signing/developer-id.p12 | tr -d '\n' | gh secret set SCANAPP_P12_BASE64`
 - `SCANAPP_P12_PASSWORD`: the password of the `.p12`
+- `SCANAPP_NOTARY_KEY_BASE64`: an App Store Connect API key, `base64 -i AuthKey_XXXXXXXXXX.p8 | tr -d '\n' | gh secret set SCANAPP_NOTARY_KEY_BASE64`
+- `SCANAPP_NOTARY_KEY_ID`: that key's ID
+- `SCANAPP_NOTARY_ISSUER_ID`: the issuer ID shown above the list of keys
 
 ## Notes
 
