@@ -103,6 +103,9 @@ check_version "$app"
 # actool also writes a Lightfast.icns fallback and the CFBundleIcon* keys.
 step "Compiling app icon"
 icon_plist="$(mktemp -t lightfast-icon).plist"
+# cargo-bundle only creates Resources when it has resources to copy, and
+# actool will not create its output directory.
+mkdir -p "$app/Contents/Resources"
 # actool prints its errors to stdout, so keep the output and show it on failure.
 actool_out="$(xcrun actool assets/Lightfast.icon --compile "$app/Contents/Resources" \
     --app-icon Lightfast --platform macosx --target-device mac \

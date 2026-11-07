@@ -30,11 +30,6 @@ jobs:
         with:
           toolchain: 1.98.1
 
-      # The image defaults to Xcode 27.1, whose actool fails on the
-      # Icon Composer icon. 27.2 compiles it.
-      - name: Select Xcode 27.2
-        run: sudo xcode-select -s /Applications/Xcode_27.2.app
-
       # Caches the registry, compiled dependencies and ~/.cargo/bin. Only main
       # saves, so pull requests reuse its cache without evicting it.
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
