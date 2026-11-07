@@ -103,10 +103,12 @@ check_version "$app"
 # actool also writes a Lightfast.icns fallback and the CFBundleIcon* keys.
 step "Compiling app icon"
 icon_plist="$(mktemp -t lightfast-icon).plist"
-xcrun actool assets/Lightfast.icon --compile "$app/Contents/Resources" \
+# actool prints its errors to stdout, so keep the output and show it on failure.
+actool_out="$(xcrun actool assets/Lightfast.icon --compile "$app/Contents/Resources" \
     --app-icon Lightfast --platform macosx --target-device mac \
     --minimum-deployment-target 27.0 --output-partial-info-plist "$icon_plist" \
-    --output-format human-readable-text --errors --warnings >/dev/null
+    --output-format human-readable-text --errors --warnings 2>&1)" \
+    || { echo "$actool_out" >&2; die "actool failed to compile the app icon"; }
 /usr/libexec/PlistBuddy -c "Merge $icon_plist" "$app/Contents/Info.plist" >/dev/null
 rm -f "$icon_plist"
 [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$app/Contents/Info.plist")" == Lightfast ]] \
