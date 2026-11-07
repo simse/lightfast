@@ -24,7 +24,7 @@ define_class!(
     /// Receives a control's action and forwards it to GPUI by key.
     #[unsafe(super(NSObject))]
     #[thread_kind = MainThreadOnly]
-    #[name = "ScanAppControlTarget"]
+    #[name = "LightfastControlTarget"]
     #[ivars = TargetIvars]
     struct Target;
 

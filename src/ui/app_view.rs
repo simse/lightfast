@@ -16,16 +16,16 @@ use gpui_component::slider::{Slider, SliderEvent, SliderState};
 use gpui_component::{
     ActiveTheme as _, Disableable as _, IndexPath, Selectable as _, Sizable as _, TitleBar, h_flex, v_flex,
 };
-use scanapp::job::{Area, Estimate, Format, Job, Output, ScanMode, human_bytes, total_raw_bytes};
-use scanapp::raster::{PixelFormat, RgbImage};
-use scanapp::scanner::{Caps, Command, Event, GammaRange, Scanner, SourceCaps};
+use lightfast::job::{Area, Estimate, Format, Job, Output, ScanMode, human_bytes, total_raw_bytes};
+use lightfast::raster::{PixelFormat, RgbImage};
+use lightfast::scanner::{Caps, Command, Event, GammaRange, Scanner, SourceCaps};
 
 use super::glass::{self, ButtonRole, Control, ControlEvent, ControlSize, Fills, Material, Pane, Spec};
 use super::menu;
 use super::preview::{MAX_ZOOM, MIN_ZOOM, Preview};
 use super::theme::CanvasColors;
 
-actions!(scanapp, [ZoomIn, ZoomOut, ZoomToFit, SingleAreaMode, MultipleAreaMode, DeleteFrame, Quit, CheckForUpdates]);
+actions!(lightfast, [ZoomIn, ZoomOut, ZoomToFit, SingleAreaMode, MultipleAreaMode, DeleteFrame, Quit, CheckForUpdates]);
 
 /// Bed size used for the outline before a scanner is found (A4).
 const DEFAULT_BED: (f64, f64) = (216.0, 297.0);
@@ -585,7 +585,7 @@ impl AppView {
                 .pr_2()
                 .gap_2()
                 .text_sm()
-                .child(div().font_weight(FontWeight::MEDIUM).child("ScanApp"))
+                .child(div().font_weight(FontWeight::MEDIUM).child("Lightfast"))
                 .child(div().text_color(theme.muted_foreground).child(self.scanner_name())),
         )
     }
@@ -600,7 +600,7 @@ impl AppView {
                 .gap_2()
                 .justify_between()
                 .child(
-                    v_flex().min_w_0().child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child("ScanApp")).child(
+                    v_flex().min_w_0().child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child("Lightfast")).child(
                         div()
                             .text_xs()
                             .text_color(muted)

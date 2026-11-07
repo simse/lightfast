@@ -1,4 +1,4 @@
-//! `ScanApp`: a flatbed photo/art scanner.
+//! Lightfast: a flatbed photo/art scanner.
 
 mod ui;
 mod updater;
@@ -16,7 +16,7 @@ use gpui_component::{Root, TitleBar};
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
-    log::info!(version = env!("CARGO_PKG_VERSION"); "starting ScanApp");
+    log::info!(version = env!("CARGO_PKG_VERSION"); "starting Lightfast");
     gpui_platform::application().run(|cx| {
         gpui_component::init(cx);
         ui::glass::init(cx);

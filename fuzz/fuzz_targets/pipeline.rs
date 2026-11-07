@@ -9,9 +9,9 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use scanapp::job::Format;
-use scanapp::raster::{PixelFormat, RowAssembler};
-use scanapp::sink::{self, Spec};
+use lightfast::job::Format;
+use lightfast::raster::{PixelFormat, RowAssembler};
+use lightfast::sink::{self, Spec};
 
 #[derive(Debug, Arbitrary)]
 struct Input {
@@ -84,7 +84,7 @@ fuzz_target!(|inp: Input| {
     }
 
     let spec = Spec { width: width as u32, height: height as u32, dpi: inp.dpi, pixel };
-    let dir = std::env::temp_dir().join("scanapp-fuzz");
+    let dir = std::env::temp_dir().join("lightfast-fuzz");
     std::fs::create_dir_all(&dir).unwrap();
     let id = COUNTER.fetch_add(1, Ordering::Relaxed);
     let path = dir.join(format!("{}-{id}.{}", std::process::id(), format.extension()));

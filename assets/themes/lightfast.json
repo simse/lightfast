@@ -1,9 +1,9 @@
 {
-  "name": "ScanApp",
-  "author": "ScanApp",
+  "name": "Lightfast",
+  "author": "Lightfast",
   "themes": [
     {
-      "name": "ScanApp Dark",
+      "name": "Lightfast Dark",
       "mode": "dark",
       "font.size": 14,
       "mono_font.size": 13,
@@ -101,7 +101,7 @@
       }
     },
     {
-      "name": "ScanApp Light",
+      "name": "Lightfast Light",
       "mode": "light",
       "font.size": 14,
       "mono_font.size": 13,

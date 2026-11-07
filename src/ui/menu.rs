@@ -15,9 +15,9 @@ pub fn set(cx: &App, multi: bool) {
         app_items.push(MenuItem::action("Check for Updates…", CheckForUpdates));
         app_items.push(MenuItem::separator());
     }
-    app_items.push(MenuItem::action("Quit ScanApp", Quit));
+    app_items.push(MenuItem::action("Quit Lightfast", Quit));
     cx.set_menus([
-        Menu { name: "ScanApp".into(), items: app_items, disabled: false },
+        Menu { name: "Lightfast".into(), items: app_items, disabled: false },
         Menu {
             name: "Scan".into(),
             items: vec![

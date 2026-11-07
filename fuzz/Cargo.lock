@@ -5415,7 +5415,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scanapp"
+name = "lightfast"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -5444,14 +5444,14 @@ dependencies = [
 ]
 
 [[package]]
-name = "scanapp-fuzz"
+name = "lightfast-fuzz"
 version = "0.0.0"
 dependencies = [
  "anyhow",
  "arbitrary",
  "image",
  "libfuzzer-sys",
- "scanapp",
+ "lightfast",
 ]
 
 [[package]]

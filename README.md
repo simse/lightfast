@@ -1,4 +1,4 @@
-# ScanApp
+# Lightfast
 
 A flatbed photo and art scanner for macOS, built on GPUI, with scanner drivers written in pure safe Rust instead of C SANE.
 
@@ -77,7 +77,7 @@ If you own one of these scanners, a USB recording from stock SANE would let us r
 
 ### Licensing
 
-The ported crates are derivative works of their SANE backends and keep their licences. Most backends carry the SANE linking exception, which lets ScanApp link them without becoming GPL.
+The ported crates are derivative works of their SANE backends and keep their licences. Most backends carry the SANE linking exception, which lets Lightfast link them without becoming GPL.
 
 Backends marked as having no exception would make the whole program GPL if linked, so when ported they will build only with the `gpl-backends` feature of the `scan` crate, which is off by default. None of them are ported yet. The licence column comes from each backend's source headers and isn't legal advice.
 

@@ -185,7 +185,7 @@ where
     [C::Inner]: TiffValue,
 {
     img.resolution(tiff::tags::ResolutionUnit::Inch, Rational { n: spec.dpi, d: 1 });
-    img.encoder().write_tag(tiff::tags::Tag::Software, "scanapp")?;
+    img.encoder().write_tag(tiff::tags::Tag::Software, "lightfast")?;
     img.rows_per_strip(TIFF_ROWS_PER_STRIP)?;
 
     // Re-chunk incoming batches into exact strip sizes.
@@ -294,7 +294,7 @@ mod tests {
         // 123 px is not a multiple of 8, so lineart rows end mid-byte.
         let spec = Spec { width: 123, height: 141, dpi: 600, pixel };
         let data = pattern(spec);
-        let dir = std::env::temp_dir().join(format!("scanapp-test-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("lightfast-test-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(format!("t-{pixel:?}.{}", format.extension()));
         write(format, &path, spec, batches(&data, spec)).unwrap();
@@ -331,7 +331,7 @@ mod tests {
     #[test]
     fn png_lineart_is_stored_as_one_bit() {
         let spec = Spec { width: 20, height: 3, dpi: 300, pixel: PixelFormat::Lineart };
-        let path = std::env::temp_dir().join(format!("scanapp-1bit-{}.png", std::process::id()));
+        let path = std::env::temp_dir().join(format!("lightfast-1bit-{}.png", std::process::id()));
         write(Format::Png, &path, spec, std::iter::once(Ok(pattern(spec)))).unwrap();
         let decoder = png::Decoder::new(std::io::BufReader::new(File::open(&path).unwrap()));
         let info = decoder.read_info().unwrap().info().clone();
@@ -367,7 +367,7 @@ mod tests {
     #[test]
     fn abort_stops_write_with_error() {
         let spec = Spec { width: 10, height: 100, dpi: 300, pixel: PixelFormat::Rgb8 };
-        let path = std::env::temp_dir().join(format!("scanapp-abort-{}.tif", std::process::id()));
+        let path = std::env::temp_dir().join(format!("lightfast-abort-{}.tif", std::process::id()));
         let src = [Ok(vec![0; 30 * 10]), Err(anyhow::anyhow!("cancelled"))].into_iter();
         let err = write(Format::Tiff, &path, spec, src).unwrap_err();
         assert!(err.to_string().contains("cancelled"));
