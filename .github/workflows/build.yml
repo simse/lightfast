@@ -43,12 +43,12 @@ jobs:
       # in the keychain for the DMG.
       - name: Import signing certificate
         env:
-          SCANAPP_P12_BASE64: ${{ secrets.SCANAPP_P12_BASE64 }}
-          SCANAPP_P12_PASSWORD: ${{ secrets.SCANAPP_P12_PASSWORD }}
+          LIGHTFAST_P12_BASE64: ${{ secrets.LIGHTFAST_P12_BASE64 }}
+          LIGHTFAST_P12_PASSWORD: ${{ secrets.LIGHTFAST_P12_PASSWORD }}
         run: |
           umask 077
           mkdir -p signing
-          base64 --decode <<<"$SCANAPP_P12_BASE64" > signing/developer-id.p12
+          base64 --decode <<<"$LIGHTFAST_P12_BASE64" > signing/developer-id.p12
 
           keychain="$RUNNER_TEMP/signing.keychain-db"
           keychain_password="$(openssl rand -hex 32)"
@@ -56,40 +56,40 @@ jobs:
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$keychain_password" "$keychain"
           security import signing/developer-id.p12 -k "$keychain" -f pkcs12 \
-            -P "$SCANAPP_P12_PASSWORD" -T /usr/bin/codesign
+            -P "$LIGHTFAST_P12_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s \
             -k "$keychain_password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" login.keychain-db
 
-      # package.sh reads the scanapp-notary profile from the default keychain.
+      # package.sh reads the lightfast-notary profile from the default keychain.
       - name: Store notary credentials
         env:
-          SCANAPP_NOTARY_KEY_BASE64: ${{ secrets.SCANAPP_NOTARY_KEY_BASE64 }}
-          SCANAPP_NOTARY_KEY_ID: ${{ secrets.SCANAPP_NOTARY_KEY_ID }}
-          SCANAPP_NOTARY_ISSUER_ID: ${{ secrets.SCANAPP_NOTARY_ISSUER_ID }}
+          LIGHTFAST_NOTARY_KEY_BASE64: ${{ secrets.LIGHTFAST_NOTARY_KEY_BASE64 }}
+          LIGHTFAST_NOTARY_KEY_ID: ${{ secrets.LIGHTFAST_NOTARY_KEY_ID }}
+          LIGHTFAST_NOTARY_ISSUER_ID: ${{ secrets.LIGHTFAST_NOTARY_ISSUER_ID }}
         run: |
           umask 077
           keychain="$RUNNER_TEMP/signing.keychain-db"
           key="$RUNNER_TEMP/notary-key.p8"
-          base64 --decode <<<"$SCANAPP_NOTARY_KEY_BASE64" > "$key"
+          base64 --decode <<<"$LIGHTFAST_NOTARY_KEY_BASE64" > "$key"
           security default-keychain -d user -s "$keychain"
-          xcrun notarytool store-credentials scanapp-notary --keychain "$keychain" \
-            --key "$key" --key-id "$SCANAPP_NOTARY_KEY_ID" --issuer "$SCANAPP_NOTARY_ISSUER_ID"
+          xcrun notarytool store-credentials lightfast-notary --keychain "$keychain" \
+            --key "$key" --key-id "$LIGHTFAST_NOTARY_KEY_ID" --issuer "$LIGHTFAST_NOTARY_ISSUER_ID"
           rm -f "$key"
 
       - name: Build notarized DMG
         env:
-          SCANAPP_P12_PASSWORD: ${{ secrets.SCANAPP_P12_PASSWORD }}
+          LIGHTFAST_P12_PASSWORD: ${{ secrets.LIGHTFAST_P12_PASSWORD }}
         run: |
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            export SCANAPP_VERSION="${GITHUB_REF_NAME#v}"
+            export LIGHTFAST_VERSION="${GITHUB_REF_NAME#v}"
           fi
           scripts/macos/package.sh
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: ScanApp-${{ github.sha }}
-          path: target/release/bundle/dmg/ScanApp.dmg
+          name: Lightfast-${{ github.sha }}
+          path: target/release/bundle/dmg/Lightfast.dmg
           if-no-files-found: error
           retention-days: 14
 
@@ -101,7 +101,7 @@ jobs:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
           mkdir -p target/publish
-          cp target/release/bundle/dmg/ScanApp.dmg "target/publish/ScanApp-${GITHUB_REF_NAME#v}.dmg"
+          cp target/release/bundle/dmg/Lightfast.dmg "target/publish/Lightfast-${GITHUB_REF_NAME#v}.dmg"
           target/sparkle/bin/generate_appcast --ed-key-file - \
             --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             --link "https://github.com/$GITHUB_REPOSITORY" \
@@ -139,5 +139,5 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release create "$GITHUB_REF_NAME" release/* \
-            --verify-tag --generate-notes --draft --title "ScanApp ${GITHUB_REF_NAME#v}"
+            --verify-tag --generate-notes --draft --title "Lightfast ${GITHUB_REF_NAME#v}"
           gh release edit "$GITHUB_REF_NAME" --draft=false --latest

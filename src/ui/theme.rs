@@ -5,10 +5,10 @@ use std::rc::Rc;
 use gpui::{App, Hsla};
 use gpui_component::{Theme, ThemeMode, ThemeRegistry};
 
-const THEMES: &str = include_str!("../../assets/themes/scanapp.json");
-const DARK: &str = "ScanApp Dark";
+const THEMES: &str = include_str!("../../assets/themes/lightfast.json");
+const DARK: &str = "Lightfast Dark";
 
-/// Installs the `ScanApp` dark palette and switches to it.
+/// Installs the Lightfast dark palette and switches to it.
 ///
 /// The dark palette is installed for both modes, so a macOS appearance change
 /// can never switch the app to light.

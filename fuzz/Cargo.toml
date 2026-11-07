@@ -1,5 +1,5 @@
 [package]
-name = "scanapp-fuzz"
+name = "lightfast-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2024"
@@ -13,7 +13,7 @@ arbitrary = { version = "1", features = ["derive"] }
 image = { version = "0.25", default-features = false, features = ["png", "tiff"] }
 anyhow = "1"
 
-[dependencies.scanapp]
+[dependencies.lightfast]
 path = ".."
 
 [[bin]]

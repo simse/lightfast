@@ -4,7 +4,7 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use scanapp::raster::{PixelFormat, Thumbnail, to_rgb8};
+use lightfast::raster::{PixelFormat, Thumbnail, to_rgb8};
 
 #[derive(Debug, Arbitrary)]
 struct Input {

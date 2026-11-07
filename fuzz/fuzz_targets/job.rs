@@ -3,8 +3,8 @@
 
 use arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
-use scanapp::job::{Area, Estimate, human_bytes, mm_to_px};
-use scanapp::raster::PixelFormat;
+use lightfast::job::{Area, Estimate, human_bytes, mm_to_px};
+use lightfast::raster::PixelFormat;
 
 #[derive(Debug, Arbitrary)]
 struct Input {

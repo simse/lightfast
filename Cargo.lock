@@ -3335,6 +3335,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "lightfast"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-channel",
+ "chrono",
+ "dirs 7.0.0",
+ "env_logger",
+ "fs4",
+ "gpui-component",
+ "gpui-pre",
+ "gpui-pre-platform",
+ "image",
+ "log",
+ "mimalloc",
+ "num-traits",
+ "objc2 0.6.5",
+ "objc2-app-kit 0.3.2",
+ "objc2-core-foundation",
+ "objc2-core-graphics",
+ "objc2-foundation 0.3.2",
+ "objc2-quartz-core 0.3.2",
+ "png 0.18.1",
+ "raw-window-handle",
+ "scan",
+ "tiff",
+]
+
+[[package]]
 name = "linebender_resource_handle"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5541,35 +5570,6 @@ dependencies = [
  "scan-usb",
  "zune-core 0.5.3",
  "zune-jpeg 0.5.15",
-]
-
-[[package]]
-name = "scanapp"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-channel",
- "chrono",
- "dirs 7.0.0",
- "env_logger",
- "fs4",
- "gpui-component",
- "gpui-pre",
- "gpui-pre-platform",
- "image",
- "log",
- "mimalloc",
- "num-traits",
- "objc2 0.6.5",
- "objc2-app-kit 0.3.2",
- "objc2-core-foundation",
- "objc2-core-graphics",
- "objc2-foundation 0.3.2",
- "objc2-quartz-core 0.3.2",
- "png 0.18.1",
- "raw-window-handle",
- "scan",
- "tiff",
 ]
 
 [[package]]

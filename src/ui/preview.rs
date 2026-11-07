@@ -8,7 +8,7 @@
 //! losslessly enough for layout, so no lossy casts are needed.
 
 use gpui::{Bounds, Pixels, Point, point, size};
-use scanapp::job::Area;
+use lightfast::job::Area;
 
 /// Corner handle hit radius, in screen pixels.
 const HANDLE_HIT: f64 = 10.0;

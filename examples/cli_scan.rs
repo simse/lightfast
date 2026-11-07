@@ -20,8 +20,8 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use anyhow::{Context as _, Result, bail};
-use scanapp::job::{Area, Format, Job, Output, ScanMode};
-use scanapp::scanner::{Caps, Command, Event, Scanner};
+use lightfast::job::{Area, Format, Job, Output, ScanMode};
+use lightfast::scanner::{Caps, Command, Event, Scanner};
 
 /// The scan requested on the command line, before mode and source are
 /// resolved against the scanner.
