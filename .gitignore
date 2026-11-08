@@ -1,4 +1,7 @@
 /target
+# Local Developer ID certificate exports. Never commit these.
 /signing
 .DS_Store
 /vendor
+/build
+xcuserdata/

@@ -11,6 +11,9 @@ pub struct UsbModel {
     pub model: &'static str,
 }
 
+/// Opens a device a [`UsbDriver`] recognised.
+pub type OpenFn = fn(Box<dyn UsbTransport>) -> Result<Box<dyn Device>>;
+
 /// A USB backend: the Rust counterpart of a SANE backend's device table and
 /// `sane_open`.
 #[derive(Debug, Clone, Copy)]
@@ -20,7 +23,7 @@ pub struct UsbDriver {
     /// Recognises a vendor and product ID.
     pub find: fn(u16, u16) -> Option<UsbModel>,
     /// Opens a device `find` recognised.
-    pub open: fn(Box<dyn UsbTransport>) -> Result<Box<dyn Device>>,
+    pub open: OpenFn,
     /// Which interface to claim.
     pub interface: u8,
 }

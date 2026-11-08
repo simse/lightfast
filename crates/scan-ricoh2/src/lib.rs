@@ -20,7 +20,7 @@ use scan_core::{
 use scan_usb::{UsbDriver, UsbModel, UsbTransport};
 
 const VENDOR_ID: u16 = 0x05ca;
-const TIMEOUT: Duration = Duration::from_millis(20_000);
+const TIMEOUT: Duration = Duration::from_secs(20);
 const MAX_LINE_SIZE: usize = 240 * 256;
 const HEIGHT_PIXELS_300DPI: usize = 3508;
 const WIDTH_BYTES_300DPI: usize = 2560;
@@ -55,8 +55,10 @@ fn capabilities() -> Capabilities {
         sources: vec![SourceCaps {
             name: "Flatbed".into(),
             kind: SourceKind::Flatbed,
-            width_mm: WIDTH_PIXELS_300DPI as f64 / 300.0 * scan_core::MM_PER_INCH,
-            height_mm: HEIGHT_PIXELS_300DPI as f64 / 300.0 * scan_core::MM_PER_INCH,
+            width_mm: f64::from(u32::try_from(WIDTH_PIXELS_300DPI).unwrap_or(u32::MAX)) / 300.0
+                * scan_core::MM_PER_INCH,
+            height_mm: f64::from(u32::try_from(HEIGHT_PIXELS_300DPI).unwrap_or(u32::MAX)) / 300.0
+                * scan_core::MM_PER_INCH,
             modes: vec![
                 mode(MODE_COLOR, Channels::Rgb, 8, &RESOLUTIONS),
                 mode("Gray", Channels::Gray, 8, &RESOLUTIONS),
@@ -117,6 +119,7 @@ pub struct Ricoh2 {
 
 impl Ricoh2 {
     /// Wraps an open transport. The device isn't touched until a scan starts.
+    #[must_use]
     pub fn open(usb: Box<dyn UsbTransport>) -> Self {
         let info = DRIVER.device_info(usb.ids());
         Self { usb, info, caps: capabilities(), active: None, queue: ByteQueue::new() }
@@ -293,10 +296,7 @@ mod tests {
 
     #[test]
     fn short_replies_are_errors() {
-        let mock = Mock::new(VENDOR_ID, 0x042c, |t| match t {
-            Transfer::BulkIn(_) => Ok(vec![]),
-            _ => Ok(vec![]),
-        });
+        let mock = Mock::new(VENDOR_ID, 0x042c, |_| Ok(vec![]));
         let mut scanner = Ricoh2::open(Box::new(mock));
         let settings = full_area_settings(scanner.capabilities(), MODE_COLOR, 300);
         assert!(scanner.start(&settings, &CancelToken::new()).is_err());

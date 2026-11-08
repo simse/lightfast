@@ -156,7 +156,7 @@ impl Lines {
         }
         self.partial.extend_from_slice(data);
         let whole = self.partial.len() / 3 * 3;
-        for pixel in self.partial[..whole].chunks_exact_mut(3) {
+        for pixel in self.partial[..whole].as_chunks_mut::<3>().0 {
             pixel.swap(0, 2);
         }
         out.push(&self.partial[..whole]);
@@ -185,6 +185,7 @@ pub struct LexmarkX2600 {
 
 impl LexmarkX2600 {
     /// Wraps an open transport. The device isn't touched until a scan starts.
+    #[must_use]
     pub fn open(usb: Box<dyn UsbTransport>) -> Self {
         let info = DRIVER.device_info(usb.ids());
         Self { usb, info, caps: capabilities(), active: None, queue: ByteQueue::new() }

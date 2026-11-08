@@ -21,7 +21,7 @@ mod replay;
 use std::fmt;
 use std::time::Duration;
 
-pub use driver::{UsbDriver, UsbModel};
+pub use driver::{OpenFn, UsbDriver, UsbModel};
 #[cfg(feature = "hardware")]
 pub use hardware::{NusbTransport, UsbDeviceInfo, list_devices};
 pub use replay::{Replay, ReplayError};

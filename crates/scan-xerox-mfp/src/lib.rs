@@ -1114,7 +1114,6 @@ mod tests {
             Transfer::BulkIn(_) => match *last.lock().unwrap() {
                 CMD_INQUIRY => Ok(inq.clone()),
                 CMD_RESERVE_UNIT => Ok(replies.remove(0)),
-                CMD_SET_WINDOW => Ok(reply_32(0)),
                 CMD_OBJECT_POSITION => {
                     let mut r = reply_32(STATUS_CHECK);
                     r[4..6].copy_from_slice(&STATE_NO_DOCUMENT.to_be_bytes());
@@ -1130,7 +1129,9 @@ mod tests {
         let err = scanner.start(&s, &CancelToken::new()).unwrap_err();
         assert_eq!(err.kind(), ErrorKind::Device);
         let sent = sent_commands(&log);
-        assert_eq!(sent.iter().filter(|&&c| c == CMD_RESERVE_UNIT).count(), 2);
+        #[allow(clippy::naive_bytecount, reason = "a handful of commands in a test")]
+        let reserves = sent.iter().filter(|&&c| c == CMD_RESERVE_UNIT).count();
+        assert_eq!(reserves, 2);
         assert_eq!(*sent.last().unwrap(), CMD_RELEASE_UNIT);
     }
 

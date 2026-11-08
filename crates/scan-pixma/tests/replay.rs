@@ -46,11 +46,27 @@ impl UsbTransport for Shared {
     fn interrupt_in(&mut self, buf: &mut [u8], t: Duration) -> scan_usb::Result<usize> {
         self.lock().interrupt_in(buf, t)
     }
-    fn control_in(&mut self, a: u8, b: u8, c: u16, d: u16, buf: &mut [u8], t: Duration) -> scan_usb::Result<usize> {
-        self.lock().control_in(a, b, c, d, buf, t)
+    fn control_in(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        buf: &mut [u8],
+        t: Duration,
+    ) -> scan_usb::Result<usize> {
+        self.lock().control_in(request_type, request, value, index, buf, t)
     }
-    fn control_out(&mut self, a: u8, b: u8, c: u16, d: u16, data: &[u8], t: Duration) -> scan_usb::Result<usize> {
-        self.lock().control_out(a, b, c, d, data, t)
+    fn control_out(
+        &mut self,
+        request_type: u8,
+        request: u8,
+        value: u16,
+        index: u16,
+        data: &[u8],
+        t: Duration,
+    ) -> scan_usb::Result<usize> {
+        self.lock().control_out(request_type, request, value, index, data, t)
     }
     fn sleep(&mut self, _: Duration) {}
 }

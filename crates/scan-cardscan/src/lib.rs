@@ -49,7 +49,7 @@ pub const DRIVER: UsbDriver = UsbDriver {
 };
 
 fn capabilities() -> Capabilities {
-    let mm = |px: usize| px as f64 / f64::from(DPI) * scan_core::MM_PER_INCH;
+    let mm = |px: usize| f64::from(u32::try_from(px).unwrap_or(u32::MAX)) / f64::from(DPI) * scan_core::MM_PER_INCH;
     Capabilities {
         sources: vec![SourceCaps {
             name: "Feeder".into(),
@@ -311,7 +311,7 @@ mod tests {
             }
             Transfer::BulkIn(len) if *len == CAL_LEN => {
                 let mut r = vec![0; CAL_LEN];
-                for (i, line) in r[HEADER_SIZE..].chunks_exact_mut(PIXELS_PER_LINE).enumerate() {
+                for (i, line) in r[HEADER_SIZE..].as_chunks_mut::<PIXELS_PER_LINE>().0.iter_mut().enumerate() {
                     line.fill(if i % 2 == 0 { 10 } else { 110 });
                 }
                 Ok(r)
@@ -342,7 +342,7 @@ mod tests {
     #[test]
     fn colour_runs_become_rgb_pixels_in_reverse_channel_order() {
         let mut reply = vec![0u8; CAL_LEN];
-        for line in reply[HEADER_SIZE..].chunks_exact_mut(PIXELS_PER_LINE).skip(1).step_by(2) {
+        for line in reply[HEADER_SIZE..].as_chunks_mut::<PIXELS_PER_LINE>().0.iter_mut().skip(1).step_by(2) {
             line.fill(255);
         }
         let cal = Calibration::parse(&reply);

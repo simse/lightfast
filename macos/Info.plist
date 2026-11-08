@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Keys without an INFOPLIST_KEY_ build setting. Xcode merges in the rest. -->
+<plist version="1.0">
+<dict>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Lightfast looks for network scanners on your local network.</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/simse/lightfast/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>QS5qoA/vpWlcrILWh6o1SifzNgNqvFTep7Uet7AmIy4=</string>
+</dict>
+</plist>

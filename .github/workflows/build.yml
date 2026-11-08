@@ -1,4 +1,4 @@
-name: Build
+name: build
 
 on:
   push:
@@ -15,110 +15,149 @@ concurrency:
 permissions:
   contents: read
 
+# One job per platform: each packages the same `lightfast` cargo binary with
+# that platform's own tooling (Xcode here).
 jobs:
   macos:
+    name: macos
     # The app targets macOS 27, so build against the Xcode 27 image.
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      # Pinned because a toolchain change invalidates the whole cargo cache.
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
-        with:
-          toolchain: 1.98.1
+      # Installs the toolchain pinned in rust-toolchain.toml.
+      - name: install rust
+        run: rustup toolchain install
 
-      # Caches the registry, compiled dependencies and ~/.cargo/bin. Only main
-      # saves, so pull requests reuse its cache without evicting it.
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # Caches the registry and compiled dependencies. The Xcode build uses
+      # the same target directory (CARGO_TARGET_DIR below). Only main saves, so
+      # pull requests reuse its cache without evicting it.
+      - name: cache cargo
+        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      - name: Install cargo-bundle
-        run: cargo bundle --version >/dev/null 2>&1 || cargo install cargo-bundle --version 0.12.0 --locked
-
-      # cargo-bundle signs from the .p12 file; package.sh looks up the identity
-      # in the keychain for the DMG.
-      - name: Import signing certificate
+      # Xcode signs from the keychain: Developer ID for the archive and export,
+      # and the DMG below.
+      - name: import certificate
         env:
           LIGHTFAST_P12_BASE64: ${{ secrets.LIGHTFAST_P12_BASE64 }}
           LIGHTFAST_P12_PASSWORD: ${{ secrets.LIGHTFAST_P12_PASSWORD }}
         run: |
           umask 077
-          mkdir -p signing
-          base64 --decode <<<"$LIGHTFAST_P12_BASE64" > signing/developer-id.p12
+          p12="$RUNNER_TEMP/developer-id.p12"
+          base64 --decode <<<"$LIGHTFAST_P12_BASE64" > "$p12"
 
           keychain="$RUNNER_TEMP/signing.keychain-db"
           keychain_password="$(openssl rand -hex 32)"
           security create-keychain -p "$keychain_password" "$keychain"
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$keychain_password" "$keychain"
-          security import signing/developer-id.p12 -k "$keychain" -f pkcs12 \
+          security import "$p12" -k "$keychain" -f pkcs12 \
             -P "$LIGHTFAST_P12_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s \
             -k "$keychain_password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" login.keychain-db
+          rm -f "$p12"
 
-      # package.sh reads the lightfast-notary profile from the default keychain.
-      - name: Store notary credentials
+      # The tag is the source of truth for the version, so tagged builds write
+      # it into Cargo.toml too. Sparkle compares CFBundleVersion to decide what
+      # is newer: a UTC timestamp, the format cargo-bundle used, so builds keep
+      # sorting after the ones already released.
+      - name: set version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            sed -i '' -E "/^\[package\]/,/^\[/ s/^version = \".*\"/version = \"$version\"/" Cargo.toml
+          else
+            version="$(cargo metadata --no-deps --format-version 1 \
+              | jq -r '.packages[] | select(.name == "lightfast") | .version')"
+          fi
+          echo "LIGHTFAST_VERSION=$version" >> "$GITHUB_ENV"
+          echo "LIGHTFAST_BUILD=$(date -u +%Y%m%d.%H%M%S)" >> "$GITHUB_ENV"
+
+      - name: archive
+        run: |
+          xcodebuild archive -project macos/Lightfast.xcodeproj -scheme Lightfast \
+            -archivePath build/Lightfast.xcarchive -clonedSourcePackagesDirPath build/spm \
+            CARGO_TARGET_DIR="$GITHUB_WORKSPACE/target" \
+            MARKETING_VERSION="$LIGHTFAST_VERSION" CURRENT_PROJECT_VERSION="$LIGHTFAST_BUILD"
+
+      - name: export app
+        run: |
+          xcodebuild -exportArchive -archivePath build/Lightfast.xcarchive \
+            -exportOptionsPlist macos/ExportOptions.plist -exportPath build/export
+
+      # LZMA (ULMO) is the smallest image format.
+      - name: create dmg
+        run: |
+          mkdir build/dmg
+          ditto build/export/Lightfast.app build/dmg/Lightfast.app
+          ln -s /Applications build/dmg/Applications
+          diskutil image create from --format ULMO --volumeName Lightfast build/dmg build/Lightfast.dmg
+          codesign --timestamp -s "Developer ID Application" build/Lightfast.dmg
+
+      - name: notarize dmg
         env:
           LIGHTFAST_NOTARY_KEY_BASE64: ${{ secrets.LIGHTFAST_NOTARY_KEY_BASE64 }}
           LIGHTFAST_NOTARY_KEY_ID: ${{ secrets.LIGHTFAST_NOTARY_KEY_ID }}
           LIGHTFAST_NOTARY_ISSUER_ID: ${{ secrets.LIGHTFAST_NOTARY_ISSUER_ID }}
         run: |
           umask 077
-          keychain="$RUNNER_TEMP/signing.keychain-db"
           key="$RUNNER_TEMP/notary-key.p8"
           base64 --decode <<<"$LIGHTFAST_NOTARY_KEY_BASE64" > "$key"
-          security default-keychain -d user -s "$keychain"
-          xcrun notarytool store-credentials lightfast-notary --keychain "$keychain" \
-            --key "$key" --key-id "$LIGHTFAST_NOTARY_KEY_ID" --issuer "$LIGHTFAST_NOTARY_ISSUER_ID"
-          rm -f "$key"
-
-      - name: Build notarized DMG
-        env:
-          LIGHTFAST_P12_PASSWORD: ${{ secrets.LIGHTFAST_P12_PASSWORD }}
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            export LIGHTFAST_VERSION="${GITHUB_REF_NAME#v}"
+          auth=(--key "$key" --key-id "$LIGHTFAST_NOTARY_KEY_ID" --issuer "$LIGHTFAST_NOTARY_ISSUER_ID")
+          out="$(xcrun notarytool submit build/Lightfast.dmg "${auth[@]}" --wait --output-format json)"
+          echo "$out"
+          if [[ "$(jq -r .status <<<"$out")" != Accepted ]]; then
+            xcrun notarytool log "$(jq -r .id <<<"$out")" "${auth[@]}"
+            exit 1
           fi
-          scripts/macos/package.sh
+          rm -f "$key"
+          xcrun stapler staple build/Lightfast.dmg
+          spctl -a -t open --context context:primary-signature -vv build/Lightfast.dmg
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: upload dmg
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: Lightfast-${{ github.sha }}
-          path: target/release/bundle/dmg/Lightfast.dmg
+          path: build/Lightfast.dmg
           if-no-files-found: error
           retention-days: 14
 
-      # generate_appcast reads CFBundleVersion and the minimum system version
-      # from the app inside the DMG, and signs the DMG for Sparkle.
-      - name: Generate appcast
+      # generate_appcast comes with the Sparkle package Xcode resolved. It reads
+      # CFBundleVersion and the minimum system version from the app inside the
+      # DMG, and signs the DMG for Sparkle.
+      - name: generate appcast
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
         run: |
-          mkdir -p target/publish
-          cp target/release/bundle/dmg/Lightfast.dmg "target/publish/Lightfast-${GITHUB_REF_NAME#v}.dmg"
-          target/sparkle/bin/generate_appcast --ed-key-file - \
+          mkdir -p build/publish
+          cp build/Lightfast.dmg "build/publish/Lightfast-$LIGHTFAST_VERSION.dmg"
+          build/spm/artifacts/sparkle/Sparkle/bin/generate_appcast --ed-key-file - \
             --download-url-prefix "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/" \
             --link "https://github.com/$GITHUB_REPOSITORY" \
-            target/publish <<<"$SPARKLE_ED_PRIVATE_KEY"
-          cat target/publish/appcast.xml
+            build/publish <<<"$SPARKLE_ED_PRIVATE_KEY"
+          cat build/publish/appcast.xml
 
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: upload release
         if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: release
           path: |
-            target/publish/*.dmg
-            target/publish/appcast.xml
+            build/publish/*.dmg
+            build/publish/appcast.xml
           if-no-files-found: error
           retention-days: 14
 
   release:
+    name: release
     if: startsWith(github.ref, 'refs/tags/v')
     needs: macos
     runs-on: ubuntu-latest
@@ -126,14 +165,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      - name: download release
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: release
           path: release
 
       # Published last, because the appcast's URL follows the latest release:
       # it must never point at a release still missing its files.
-      - name: Publish release
+      - name: publish release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}

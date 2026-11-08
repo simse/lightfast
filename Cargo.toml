@@ -19,24 +19,7 @@ edition = "2024"
 description = "Flatbed photo and art scanner for macOS, built on GPUI with pure-Rust scanner drivers."
 publish = false
 
-# macOS packaging: `scripts/macos/package.sh` (see docs/macos-release.md).
-[package.metadata.bundle]
-name = "Lightfast"
-identifier = "io.simse.lightfast"
-category = "public.app-category.photography"
-copyright = "© 2026 Simon Sorensen"
-short_description = "Flatbed photo and art scanner"
-apple_signing_p12 = "signing/developer-id.p12"
-apple_signing_password_env = "LIGHTFAST_P12_PASSWORD"
-apple_signing_timestamp_url = "http://timestamp.apple.com/ts01"
-apple_signing_hardened_runtime = true
-apple_signing_entitlements = "scripts/macos/entitlements.plist"
-
-[package.metadata.bundle.osx]
-minimum_system_version = "27.0"
-info_plist_exts = ["scripts/macos/Info.plist.ext"]
-# Fetched by `scripts/macos/package.sh`, which also signs it.
-frameworks = ["target/sparkle/Sparkle.framework"]
+# macOS packaging: macos/Lightfast.xcodeproj (see docs/macos-release.md).
 
 [dependencies]
 anyhow = "1.0.104"
