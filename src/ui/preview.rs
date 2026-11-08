@@ -491,7 +491,7 @@ mod tests {
 
     #[test]
     fn entering_multi_drops_a_whole_bed_frame_but_keeps_a_chosen_one() {
-        assert!(multi().frames().is_empty());
+        assert_eq!(multi().frames(), []);
         let mut p = preview();
         p.set_selection(Area::new(10.0, 10.0, 50.0, 50.0));
         p.set_multi(true);
@@ -541,7 +541,7 @@ mod tests {
         p.remove(1);
         assert_eq!(p.selected(), None);
         p.clear();
-        assert!(p.frames().is_empty());
+        assert_eq!(p.frames(), []);
     }
 
     #[test]

@@ -203,9 +203,9 @@ impl Ma1509 {
             queue: ByteQueue::new(),
         };
         let mut ready = [0u8; 4];
-        s.cmd_read(&TEST_UNIT_READY, &mut ready)?;
+        s.cmd_read(TEST_UNIT_READY, &mut ready)?;
         let mut inquiry = [0u8; INQ_LEN];
-        s.cmd_read(&INQUIRY, &mut inquiry)?;
+        s.cmd_read(INQUIRY, &mut inquiry)?;
         if inquiry[0] & 0x1f != 0x06 {
             return Err(protocol("the device doesn't report itself as a scanner"));
         }
@@ -219,8 +219,8 @@ impl Ma1509 {
 
     /// `ma1509_cmd` for a command that reads. Keeps reading until `data` is
     /// full; the C code spins forever on an empty read, here that's an error.
-    fn cmd_read(&mut self, cmd: &[u8; 8], data: &mut [u8]) -> Result<()> {
-        self.usb.bulk_out(cmd, TIMEOUT)?;
+    fn cmd_read(&mut self, cmd: [u8; 8], data: &mut [u8]) -> Result<()> {
+        self.usb.bulk_out(&cmd, TIMEOUT)?;
         let mut done = 0;
         while done < data.len() {
             let end = data.len().min(done + READ_LIMIT);
@@ -234,8 +234,8 @@ impl Ma1509 {
     }
 
     /// `ma1509_cmd` for a command that writes.
-    fn cmd_write(&mut self, cmd: &[u8; 8], data: &[u8]) -> Result<()> {
-        self.usb.bulk_out(cmd, TIMEOUT)?;
+    fn cmd_write(&mut self, cmd: [u8; 8], data: &[u8]) -> Result<()> {
+        self.usb.bulk_out(&cmd, TIMEOUT)?;
         for chunk in data.chunks(WRITE_LIMIT) {
             self.usb.bulk_out(chunk, TIMEOUT)?;
         }
@@ -245,7 +245,7 @@ impl Ma1509 {
     fn turn_lamp(&mut self, on: bool) -> Result<()> {
         let mut p = [0u8; 0x30];
         p[0x28] = if on { 0x01 } else { 0x02 };
-        self.cmd_write(&SET_WINDOW, &p)?;
+        self.cmd_write(SET_WINDOW, &p)?;
         self.lamp_on_since = Instant::now();
         Ok(())
     }
@@ -273,7 +273,7 @@ impl Ma1509 {
         cmd[4] = (total >> 16) as u8;
         cmd[5] = (total >> 8) as u8;
         cmd[6] = total as u8;
-        self.cmd_read(&cmd, &mut buffer)?;
+        self.cmd_read(cmd, &mut buffer)?;
 
         let mut cmd = [0u8; 8];
         cmd[0] = 0x2a;
@@ -288,7 +288,7 @@ impl Ma1509 {
                     (0..CAL_LINES).map(|line| u32::from(buffer[line * CAL_PPL * 3 + column * 3 + color - 1])).sum();
                 *out = shading_factor(sum / CAL_LINES as u32);
             }
-            self.cmd_write(&cmd, &shading)?;
+            self.cmd_write(cmd, &shading)?;
         }
         Ok(())
     }
@@ -302,7 +302,7 @@ impl Ma1509 {
         cmd[6] = GAMMA_SIZE as u8;
         for color in 1..4 {
             cmd[4] = color;
-            self.cmd_write(&cmd, &table)?;
+            self.cmd_write(cmd, &table)?;
         }
         Ok(())
     }
@@ -330,9 +330,9 @@ impl Device for Ma1509 {
         let window = Window::from_settings(&self.caps, settings)?;
         self.finish();
         self.warm_up(cancel)?;
-        self.cmd_write(&SET_WINDOW, &window.packet())?;
+        self.cmd_write(SET_WINDOW, &window.packet())?;
         let mut ready = [0u8; 4];
-        self.cmd_read(&TEST_UNIT_READY, &mut ready)?;
+        self.cmd_read(TEST_UNIT_READY, &mut ready)?;
         if !window.lineart() {
             self.calibrate()?;
             self.send_gamma()?;
@@ -366,7 +366,9 @@ impl Device for Ma1509 {
             block.truncate(n);
             if lineart {
                 // The scanner sends 1 for white; the API wants 1 for black.
-                block.iter_mut().for_each(|b| *b = !*b);
+                for b in &mut block {
+                    *b = !*b;
+                }
             }
             self.queue.push(&block);
             if let Some(active) = &mut self.active {

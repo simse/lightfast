@@ -93,7 +93,7 @@ pub(crate) fn parse_find_response(data: &[u8]) -> Option<(String, String)> {
             let v = item.value;
             address = Some(format!("{}.{}.{}.{}", v[0], v[1], v[2], v[3]));
         } else if is(&item, "std-scan-discovery-model-name") {
-            model = String::from_utf8_lossy(item.value).trim_end_matches('\0').to_owned();
+            String::from_utf8_lossy(item.value).trim_end_matches('\0').clone_into(&mut model);
         }
     }
     let model = model.strip_prefix("Dell ").map_or(model.clone(), str::to_owned);

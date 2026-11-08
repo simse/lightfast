@@ -1,0 +1,287 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4C4600000000000000000101 /* Lightfast.icon in Resources */ = {isa = PBXBuildFile; fileRef = 4C4600000000000000000201 /* Lightfast.icon */; };
+		4C4600000000000000000102 /* lightfast in Embed Rust Binary */ = {isa = PBXBuildFile; fileRef = 4C4600000000000000000301 /* lightfast */; };
+		4C4600000000000000000103 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 4C4600000000000000000802 /* Sparkle */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4C4600000000000000000401 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C4600000000000000000204 /* lightfast.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = CA0021413AE21F0F8C585136;
+			remoteInfo = lightfast;
+		};
+		4C4600000000000000000402 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4C4600000000000000000204 /* lightfast.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = CA0021413AE25AD850BD0902;
+			remoteInfo = "lightfast (bundled binary)";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		4C4600000000000000000501 /* Embed Rust Binary */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				4C4600000000000000000102 /* lightfast in Embed Rust Binary */,
+			);
+			name = "Embed Rust Binary";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		4C4600000000000000000201 /* Lightfast.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; name = Lightfast.icon; path = ../assets/Lightfast.icon; sourceTree = "<group>"; };
+		4C4600000000000000000202 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4C4600000000000000000203 /* Lightfast.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Lightfast.xcconfig; sourceTree = "<group>"; };
+		4C4600000000000000000204 /* lightfast.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = lightfast.xcodeproj; path = ../lightfast.xcodeproj; sourceTree = "<group>"; };
+		4C4600000000000000000205 /* Lightfast.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Lightfast.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4C4600000000000000000503 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C4600000000000000000103 /* Sparkle in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4C4600000000000000000601 = {
+			isa = PBXGroup;
+			children = (
+				4C4600000000000000000202 /* Info.plist */,
+				4C4600000000000000000201 /* Lightfast.icon */,
+				4C4600000000000000000203 /* Lightfast.xcconfig */,
+				4C4600000000000000000204 /* lightfast.xcodeproj */,
+				4C4600000000000000000602 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4C4600000000000000000602 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C4600000000000000000205 /* Lightfast.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4C4600000000000000000603 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4C4600000000000000000301 /* lightfast */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4C4600000000000000000701 /* Lightfast */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4C4600000000000000000903 /* Build configuration list for PBXNativeTarget "Lightfast" */;
+			buildPhases = (
+				4C4600000000000000000504 /* Resources */,
+				4C4600000000000000000503 /* Frameworks */,
+				4C4600000000000000000501 /* Embed Rust Binary */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				4C4600000000000000000702 /* PBXTargetDependency */,
+			);
+			name = Lightfast;
+			packageProductDependencies = (
+				4C4600000000000000000802 /* Sparkle */,
+			);
+			productName = Lightfast;
+			productReference = 4C4600000000000000000205 /* Lightfast.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4C4600000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = 4C4600000000000000000902 /* Build configuration list for PBXProject "Lightfast" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4C4600000000000000000601;
+			packageReferences = (
+				4C4600000000000000000801 /* XCRemoteSwiftPackageReference "Sparkle" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 4C4600000000000000000602 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 4C4600000000000000000603 /* Products */;
+					ProjectRef = 4C4600000000000000000204 /* lightfast.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				4C4600000000000000000701 /* Lightfast */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		4C4600000000000000000301 /* lightfast */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = lightfast;
+			remoteRef = 4C4600000000000000000401 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4C4600000000000000000504 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4C4600000000000000000101 /* Lightfast.icon in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		4C4600000000000000000702 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "lightfast (bundled binary)";
+			targetProxy = 4C4600000000000000000402 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		4C4600000000000000000911 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C4600000000000000000203 /* Lightfast.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4C4600000000000000000912 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 4C4600000000000000000203 /* Lightfast.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		4C4600000000000000000921 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = Lightfast;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 0;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = lightfast;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lightfast;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Simon Sorensen";
+				MARKETING_VERSION = 0.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.simse.lightfast;
+				PRODUCT_NAME = Lightfast;
+			};
+			name = Debug;
+		};
+		4C4600000000000000000922 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = Lightfast;
+				CODE_SIGN_IDENTITY = "Developer ID Application";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 0;
+				DEVELOPMENT_TEAM = 884R54R9F9;
+				ENABLE_HARDENED_RUNTIME = YES;
+				EXECUTABLE_NAME = lightfast;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Lightfast;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Simon Sorensen";
+				MARKETING_VERSION = 0.0.0;
+				OTHER_CODE_SIGN_FLAGS = "--timestamp";
+				PRODUCT_BUNDLE_IDENTIFIER = io.simse.lightfast;
+				PRODUCT_NAME = Lightfast;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4C4600000000000000000902 /* Build configuration list for PBXProject "Lightfast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C4600000000000000000911 /* Debug */,
+				4C4600000000000000000912 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4C4600000000000000000903 /* Build configuration list for PBXNativeTarget "Lightfast" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C4600000000000000000921 /* Debug */,
+				4C4600000000000000000922 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4C4600000000000000000801 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = exactVersion;
+				version = 2.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4C4600000000000000000802 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C4600000000000000000801 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 4C4600000000000000000001 /* Project object */;
+}

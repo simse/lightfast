@@ -162,7 +162,7 @@ impl Scan {
         words[23] = 0x352;
         words[24] = u32::from(self.rgb);
         let mut out = [0; CONF_SIZE];
-        for (chunk, word) in out.chunks_exact_mut(4).zip(words) {
+        for (chunk, word) in out.as_chunks_mut::<4>().0.iter_mut().zip(words) {
             chunk.copy_from_slice(&word.to_be_bytes());
         }
         out
@@ -255,6 +255,7 @@ fn capabilities() -> Capabilities {
 
 impl Hpljm1005 {
     /// Wraps an open transport. The device isn't touched until a scan starts.
+    #[must_use]
     pub fn open(usb: Box<dyn UsbTransport>) -> Self {
         let ids = usb.ids().clone();
         let model = (DRIVER.find)(ids.vendor_id, ids.product_id).map_or("LaserJet M1005", |m| m.model);

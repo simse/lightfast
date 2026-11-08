@@ -600,15 +600,18 @@ impl AppView {
                 .gap_2()
                 .justify_between()
                 .child(
-                    v_flex().min_w_0().child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child("Lightfast")).child(
-                        div()
-                            .text_xs()
-                            .text_color(muted)
-                            .overflow_hidden()
-                            .text_ellipsis()
-                            .whitespace_nowrap()
-                            .child(self.scanner_name()),
-                    ),
+                    v_flex()
+                        .min_w_0()
+                        .child(div().text_sm().font_weight(FontWeight::SEMIBOLD).child("Lightfast"))
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(muted)
+                                .overflow_hidden()
+                                .text_ellipsis()
+                                .whitespace_nowrap()
+                                .child(self.scanner_name()),
+                        ),
                 )
                 .child(
                     glass::control(

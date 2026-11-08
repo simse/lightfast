@@ -281,6 +281,6 @@ mod tests {
     #[test]
     fn a_session_with_no_pages_returns_none() {
         let stream = Script { input: Cursor::new(vec![]), output: vec![] };
-        assert!(run_session(stream, &CancelToken::new()).unwrap().is_empty());
+        assert_eq!(run_session(stream, &CancelToken::new()).unwrap(), [] as [packet::Page; 0]);
     }
 }

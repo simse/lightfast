@@ -1,0 +1,6 @@
+// Base settings for Lightfast.xcodeproj and the generated ../lightfast.xcodeproj.
+// Xcode exports these to cargo, and rustc reads MACOSX_DEPLOYMENT_TARGET.
+
+MACOSX_DEPLOYMENT_TARGET = 27.0
+// Apple Silicon only.
+ARCHS = arm64

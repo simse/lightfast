@@ -1,8 +1,0 @@
-<key>NSHighResolutionCapable</key>
-<true/>
-<key>NSLocalNetworkUsageDescription</key>
-<string>Lightfast looks for network scanners on your local network.</string>
-<key>SUFeedURL</key>
-<string>https://github.com/simse/lightfast/releases/latest/download/appcast.xml</string>
-<key>SUPublicEDKey</key>
-<string>QS5qoA/vpWlcrILWh6o1SifzNgNqvFTep7Uet7AmIy4=</string>
