@@ -80,6 +80,18 @@ jobs:
           echo "LIGHTFAST_VERSION=$version" >> "$GITHUB_ENV"
           echo "LIGHTFAST_BUILD=$(date -u +%Y%m%d.%H%M%S)" >> "$GITHUB_ENV"
 
+      # Sparkle's binary comes from a GitHub release download, which is
+      # unauthenticated and occasionally times out, so retry it.
+      - name: resolve packages
+        run: |
+          for attempt in 1 2 3 4; do
+            xcodebuild -resolvePackageDependencies -project macos/Lightfast.xcodeproj \
+              -scheme Lightfast -clonedSourcePackagesDirPath build/spm && exit 0
+            echo "package resolution failed (attempt $attempt), retrying in 30 seconds" >&2
+            sleep 30
+          done
+          exit 1
+
       - name: archive
         run: |
           xcodebuild archive -project macos/Lightfast.xcodeproj -scheme Lightfast \
