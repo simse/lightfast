@@ -57,11 +57,10 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      # Only main saves, so pull requests reuse its cache without evicting it.
-      - name: cache cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: sccache
+        uses: ./.github/actions/sccache
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          redis-url: ${{ secrets.REDIS_URL }}
 
       - name: clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -87,10 +86,10 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      - name: cache cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: sccache
+        uses: ./.github/actions/sccache
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          redis-url: ${{ secrets.REDIS_URL }}
 
       - name: test
         run: cargo test --workspace --locked

@@ -1,0 +1,71 @@
+name: sccache
+description: >
+  Install sccache and make it the rustc wrapper, caching across three tiers:
+  local disk, then Upstash Redis, then the GitHub Actions cache. Hits on a
+  slower tier are copied into the faster ones; writes go to every writable tier.
+
+inputs:
+  redis-url:
+    description: >
+      rediss://user:password@host:port for the shared Redis tier. Empty when
+      secrets are unavailable (pull requests from forks), which drops that tier.
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    # Exports SCCACHE_PATH and the ACTIONS_* variables the gha tier needs, and
+    # prints the stats in a post step. Multi-level caching needs sccache 0.19.
+    - name: install sccache
+      uses: mozilla-actions/sccache-action@fc920bf0ec8de6ee65d409111f7ec508035751ba # v0.0.11
+      with:
+        version: v0.19.0
+
+    - name: configure sccache
+      shell: bash
+      env:
+        REDIS_URL: ${{ inputs.redis-url }}
+      run: |
+        {
+          # sccache can't cache incremental compilation.
+          echo "CARGO_INCREMENTAL=0"
+          # An absolute path, because Xcode's cargo build phase rewrites PATH.
+          echo "RUSTC_WRAPPER=$SCCACHE_PATH"
+          echo "SCCACHE_DIR=$RUNNER_TEMP/sccache"
+          echo "SCCACHE_CACHE_SIZE=10G"
+          echo "SCCACHE_GHA_ENABLED=true"
+          echo "SCCACHE_GHA_VERSION=1"
+          # Remote tiers are best effort: only a failed disk write fails a build.
+          echo "SCCACHE_MULTILEVEL_WRITE_ERROR_POLICY=l0"
+        } >> "$GITHUB_ENV"
+
+        if [[ -z "$REDIS_URL" ]]; then
+          echo "::notice::REDIS_URL is unavailable, so sccache skips the Redis tier"
+          echo "SCCACHE_MULTILEVEL_CHAIN=disk,gha" >> "$GITHUB_ENV"
+          exit 0
+        fi
+
+        # sccache takes the credentials separately from the endpoint.
+        scheme="${REDIS_URL%%://*}"
+        rest="${REDIS_URL#*://}"
+        userinfo="${rest%@*}"
+        password="${userinfo#*:}"
+        echo "::add-mask::$password"
+        {
+          echo "SCCACHE_MULTILEVEL_CHAIN=disk,redis,gha"
+          echo "SCCACHE_REDIS_ENDPOINT=$scheme://${rest##*@}"
+          echo "SCCACHE_REDIS_USERNAME=${userinfo%%:*}"
+          echo "SCCACHE_REDIS_PASSWORD=$password"
+          # Entries expire two weeks after they're written, keeping the database small.
+          echo "SCCACHE_REDIS_EXPIRATION=1209600"
+          echo "SCCACHE_REDIS_KEY_PREFIX=sccache/"
+        } >> "$GITHUB_ENV"
+
+    # Start the server up front: one started implicitly from inside an Xcode
+    # build hangs it. Starting here also fails fast on a bad configuration.
+    - name: start sccache
+      shell: bash
+      run: |
+        "$SCCACHE_PATH" --start-server
+        "$SCCACHE_PATH" --show-stats
