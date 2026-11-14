@@ -33,14 +33,11 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      # Caches the registry and compiled dependencies. The Xcode build uses
-      # the same target directory (CARGO_TARGET_DIR below). Only main saves,
-      # which takes a manual dispatch now that pushes there don't build. Tag
-      # builds can read main's cache.
-      - name: cache cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # Xcode's cargo build phase inherits the wrapper from the environment.
+      - name: sccache
+        uses: ./.github/actions/sccache
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          redis-url: ${{ secrets.REDIS_URL }}
 
       # Xcode signs from the keychain: Developer ID for the archive and export,
       # and the DMG below.

@@ -15,6 +15,9 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  # Smaller artifacts make every sccache read and write faster, and keep more
+  # of them under Upstash's 10 MB request limit.
+  CARGO_PROFILE_DEV_DEBUG: '0'
 
 # rustup installs the toolchain pinned in rust-toolchain.toml. Every check runs
 # on Ubuntu ARM. Code behind cfg(target_os = "macos") is only compiled by the
@@ -57,11 +60,10 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      # Only main saves, so pull requests reuse its cache without evicting it.
-      - name: cache cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: sccache
+        uses: ./.github/actions/sccache
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          redis-url: ${{ secrets.REDIS_URL }}
 
       - name: clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
@@ -87,10 +89,10 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      - name: cache cargo
-        uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - name: sccache
+        uses: ./.github/actions/sccache
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' }}
+          redis-url: ${{ secrets.REDIS_URL }}
 
       - name: test
         run: cargo test --workspace --locked
