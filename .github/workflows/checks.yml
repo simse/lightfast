@@ -15,6 +15,9 @@ permissions:
 
 env:
   CARGO_TERM_COLOR: always
+  # Smaller artifacts make every sccache read and write faster, and keep more
+  # of them under Upstash's 10 MB request limit.
+  CARGO_PROFILE_DEV_DEBUG: '0'
 
 # rustup installs the toolchain pinned in rust-toolchain.toml. Every check runs
 # on Ubuntu ARM. Code behind cfg(target_os = "macos") is only compiled by the
