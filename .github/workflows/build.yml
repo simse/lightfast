@@ -1,16 +1,16 @@
 name: build
 
+# Signing and notarizing only happen for releases: pushing a version tag builds
+# and publishes one (see the `release` job). A manual dispatch builds a DMG
+# without publishing it.
 on:
   push:
-    branches: [main]
-    # Pushing a version tag publishes a release (see the `release` job).
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
-  pull_request:
   workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
@@ -34,8 +34,9 @@ jobs:
         run: rustup toolchain install
 
       # Caches the registry and compiled dependencies. The Xcode build uses
-      # the same target directory (CARGO_TARGET_DIR below). Only main saves, so
-      # pull requests reuse its cache without evicting it.
+      # the same target directory (CARGO_TARGET_DIR below). Only main saves,
+      # which takes a manual dispatch now that pushes there don't build. Tag
+      # builds can read main's cache.
       - name: cache cargo
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:

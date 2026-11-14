@@ -89,9 +89,11 @@ redirect.
 
 ## CI
 
-`.github/workflows/build.yml` builds a signed, notarized and stapled DMG on every push to
-`main`, every pull request and every version tag, and uploads it as a workflow artifact. Version
-tags also publish the release. `.github/workflows/checks.yml` runs rustfmt, clippy and the tests.
+`.github/workflows/build.yml` builds a signed, notarized and stapled DMG for every version tag,
+uploads it as a workflow artifact and publishes the release. It doesn't run on pull requests or
+pushes to `main`. Run it by hand (`gh workflow run build.yml --ref main`) to get a DMG without
+publishing a release. `.github/workflows/checks.yml` runs rustfmt, clippy and the tests on Ubuntu
+ARM for every pull request and push to `main`.
 
 The build needs these repository secrets:
 
