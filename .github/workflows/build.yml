@@ -1,8 +1,8 @@
 name: build
 
 # Signing and notarizing only happen for releases: pushing a version tag builds
-# and publishes one (see the `release` job). A manual dispatch builds a DMG
-# without publishing it.
+# and publishes one (see the `release` job). A manual dispatch builds a DMG and
+# the AppImages without publishing them.
 on:
   push:
     tags: ['v[0-9]+.[0-9]+.[0-9]+']
@@ -16,13 +16,47 @@ permissions:
   contents: read
 
 # One job per platform: each packages the same `lightfast` cargo binary with
-# that platform's own tooling (Xcode here).
+# that platform's own tooling (Xcode for macOS, appimagetool for Linux).
 jobs:
+  # The tag is the source of truth for the version, so tagged builds write it
+  # into Cargo.toml too. Sparkle and LinSparkle compare the build number to
+  # decide what is newer: a UTC timestamp, the format cargo-bundle used, so
+  # builds keep sorting after the ones already released. It is taken once
+  # here because every platform's build must carry the same one: the appcast
+  # numbers each release's items by it.
+  version:
+    name: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+          else
+            version="$(sed -n '/^\[package\]/,/^\[/ s/^version = "\(.*\)"/\1/p' Cargo.toml)"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build=$(date -u +%Y%m%d.%H%M%S)" >> "$GITHUB_OUTPUT"
+
   macos:
     name: macos
+    needs: version
     # The app targets macOS 27, so build against the Xcode 27 image.
     runs-on: xcode-27
     timeout-minutes: 60
+    env:
+      LIGHTFAST_VERSION: ${{ needs.version.outputs.version }}
+      LIGHTFAST_BUILD: ${{ needs.version.outputs.build }}
     steps:
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -62,21 +96,10 @@ jobs:
           security list-keychains -d user -s "$keychain" login.keychain-db
           rm -f "$p12"
 
-      # The tag is the source of truth for the version, so tagged builds write
-      # it into Cargo.toml too. Sparkle compares CFBundleVersion to decide what
-      # is newer: a UTC timestamp, the format cargo-bundle used, so builds keep
-      # sorting after the ones already released.
+      # Sparkle reads the build number as CFBundleVersion.
       - name: set version
         run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            version="${GITHUB_REF_NAME#v}"
-            sed -i '' -E "/^\[package\]/,/^\[/ s/^version = \".*\"/version = \"$version\"/" Cargo.toml
-          else
-            version="$(cargo metadata --no-deps --format-version 1 \
-              | jq -r '.packages[] | select(.name == "lightfast") | .version')"
-          fi
-          echo "LIGHTFAST_VERSION=$version" >> "$GITHUB_ENV"
-          echo "LIGHTFAST_BUILD=$(date -u +%Y%m%d.%H%M%S)" >> "$GITHUB_ENV"
+          sed -i '' -E "/^\[package\]/,/^\[/ s/^version = \".*\"/version = \"$LIGHTFAST_VERSION\"/" Cargo.toml
 
       # Sparkle's binary comes from a GitHub release download, which is
       # unauthenticated and occasionally times out, so retry it.
@@ -166,20 +189,147 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  # An AppImage per architecture, each built natively. Ubuntu 24.04's glibc
+  # is the oldest the AppImages need, so they run on any distribution since.
+  linux:
+    name: linux (${{ matrix.arch }})
+    needs: version
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    env:
+      LIGHTFAST_VERSION: ${{ needs.version.outputs.version }}
+      LIGHTFAST_BUILD: ${{ needs.version.outputs.build }}
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # GPUI's Linux platform links against these.
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libx11-xcb-dev \
+            libvulkan-dev libfontconfig-dev libfreetype-dev
+
+      - name: install rust
+        run: rustup toolchain install
+
+      - name: sccache
+        uses: ./.github/actions/sccache
+        with:
+          redis-url: ${{ secrets.REDIS_URL }}
+
+      # The lockfile records the package's version too, and the build is
+      # --locked.
+      - name: set version
+        run: |
+          sed -i -E "/^\[package\]/,/^\[/ s/^version = \".*\"/version = \"$LIGHTFAST_VERSION\"/" Cargo.toml
+          sed -i -E "/^name = \"lightfast\"$/{n;s/^version = \".*\"/version = \"$LIGHTFAST_VERSION\"/}" Cargo.lock
+
+      # LIGHTFAST_BUILD is baked in as the version LinSparkle compares.
+      - name: build appimage
+        run: linux/build-appimage.sh build/linux
+
+      - name: upload appimage
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: appimage-${{ matrix.arch }}
+          path: build/linux/Lightfast-${{ matrix.arch }}.AppImage
+          if-no-files-found: error
+          retention-days: 14
+
   release:
     name: release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: macos
+    needs: [version, macos, linux]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
+    env:
+      LIGHTFAST_VERSION: ${{ needs.version.outputs.version }}
+      LIGHTFAST_BUILD: ${{ needs.version.outputs.build }}
     steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
       - name: download release
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: release
           path: release
+
+      - name: download appimages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: appimage-*
+          path: build/linux
+          merge-multiple: true
+
+      # LinSparkle has no notion of architecture, so the Linux update is one
+      # tarball holding both AppImages. The manifest names each by its
+      # architecture, which each build passes as its bundle app id, so it
+      # installs only its own (see src/updater.rs).
+      - name: create linux update
+        run: |
+          cd build/linux
+          chmod 755 Lightfast-x86_64.AppImage Lightfast-aarch64.AppImage
+          cat > linsparkle-bundle.json <<'EOF'
+          {
+            "members": [
+              { "file": "Lightfast-x86_64.AppImage", "id": "x86_64", "name": "Lightfast (x86_64)" },
+              { "file": "Lightfast-aarch64.AppImage", "id": "aarch64", "name": "Lightfast (ARM)" }
+            ]
+          }
+          EOF
+          tar czf "$GITHUB_WORKSPACE/release/Lightfast-$LIGHTFAST_VERSION-linux.tar.gz" --owner=0 --group=0 \
+            Lightfast-x86_64.AppImage Lightfast-aarch64.AppImage linsparkle-bundle.json
+          cp Lightfast-x86_64.AppImage Lightfast-aarch64.AppImage "$GITHUB_WORKSPACE/release/"
+
+      # Signs with the Sparkle key: the 32-byte Ed25519 seed, or Sparkle's
+      # older 64-byte seed-and-public-key export. The signature is checked
+      # against SUPublicEDKey before it goes in the appcast.
+      - name: add linux update to appcast
+        env:
+          SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+        run: |
+          umask 077
+          tarball="release/Lightfast-$LIGHTFAST_VERSION-linux.tar.gz"
+          seed="$RUNNER_TEMP/seed"
+          base64 --decode <<<"$SPARKLE_ED_PRIVATE_KEY" > "$seed"
+          case "$(stat -c %s "$seed")" in
+            32|64) ;;
+            *) echo "SPARKLE_ED_PRIVATE_KEY isn't a 32- or 64-byte Ed25519 key" >&2; exit 1 ;;
+          esac
+          key="$RUNNER_TEMP/sparkle.pem"
+          { printf '\x30\x2e\x02\x01\x00\x30\x05\x06\x03\x2b\x65\x70\x04\x22\x04\x20'; head -c 32 "$seed"; } \
+            | openssl pkey -inform DER -out "$key"
+          rm -f "$seed"
+
+          expected="$(sed -n '/SUPublicEDKey/{n;s/.*<string>\(.*\)<\/string>.*/\1/p;}' macos/Info.plist)"
+          actual="$(openssl pkey -in "$key" -pubout -outform DER | tail -c 32 | base64 -w0)"
+          if [[ "$actual" != "$expected" ]]; then
+            echo "SPARKLE_ED_PRIVATE_KEY doesn't match SUPublicEDKey in macos/Info.plist" >&2
+            exit 1
+          fi
+
+          signature="$(openssl pkeyutl -sign -inkey "$key" -rawin -in "$tarball" | base64 -w0)"
+          rm -f "$key"
+          python3 -I linux/add-to-appcast.py release/appcast.xml "$tarball" \
+            "https://github.com/$GITHUB_REPOSITORY/releases/download/$GITHUB_REF_NAME/$(basename "$tarball")" \
+            "$LIGHTFAST_VERSION" "$LIGHTFAST_BUILD" "$signature"
+          cat release/appcast.xml
 
       # Published last, because the appcast's URL follows the latest release:
       # it must never point at a release still missing its files.

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.simse.lightfast</id>
+  <name>Lightfast</name>
+  <summary>Scan photos and art on a flatbed scanner</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <description>
+    <p>A flatbed photo and art scanner with scanner drivers written in pure Rust, so no SANE
+      backends need to be installed.</p>
+  </description>
+  <launchable type="desktop-id">io.simse.lightfast.desktop</launchable>
+  <url type="homepage">https://github.com/simse/lightfast</url>
+  <categories>
+    <category>Graphics</category>
+    <category>Scanning</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+</component>

@@ -54,8 +54,8 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
-CI builds the DMG with that version, then publishes a GitHub release with
-`Lightfast-0.1.0.dmg` and `appcast.xml` attached. Installed apps read the appcast from the
+CI builds the DMG and the Linux AppImages with that version, then publishes a GitHub release
+with `Lightfast-0.1.0.dmg`, the AppImages, the Linux update tarball and `appcast.xml` attached. Installed apps read the appcast from the
 latest release, so publishing is what offers them the update. Only plain `vX.Y.Z` tags
 release.
 
@@ -78,7 +78,8 @@ generate_keys --account lightfast -x lightfast-sparkle.key   # store it somewher
 ```
 
 **Versions.** Sparkle compares `CFBundleVersion`, not the marketing version, to decide what is
-newer. CI sets it (`CURRENT_PROJECT_VERSION`) to the build's UTC timestamp, `YYYYMMDD.HHMMSS`, the
+newer. CI sets it (`CURRENT_PROJECT_VERSION`) to the build's UTC timestamp, taken once per
+release by the `version` job and shared with the Linux build, `YYYYMMDD.HHMMSS`, the
 format cargo-bundle used for earlier releases. `generate_appcast` copies it from the built app,
 so the build most recently tagged wins, whatever its version number says. Keep the format: a
 smaller number would stop installed apps from updating.
@@ -89,8 +90,8 @@ redirect.
 
 ## CI
 
-`.github/workflows/build.yml` builds a signed, notarized and stapled DMG for every version tag,
-uploads it as a workflow artifact and publishes the release. It doesn't run on pull requests or
+`.github/workflows/build.yml` builds a signed, notarized and stapled DMG and the Linux
+AppImages for every version tag, uploads them as workflow artifacts and publishes the release. It doesn't run on pull requests or
 pushes to `main`. Run it by hand (`gh workflow run build.yml --ref main`) to get a DMG without
 publishing a release. `.github/workflows/checks.yml` runs rustfmt, clippy and the tests on Ubuntu
 ARM for every pull request and push to `main`.
@@ -108,12 +109,10 @@ The build needs these repository secrets:
 
 ## Other platforms
 
-Packaging is per platform, around one cargo binary that has no packaging metadata. Windows and
-Linux would each get a `windows/` or `linux/` directory and a job in `build.yml` that runs
-`cargo build --release` and packages the binary with that platform's tools, for example an MSI
-or MSIX, and an AppImage or Flatpak. Sparkle and the glass UI are already `cfg(target_os =
-"macos")`. Once GPUI builds on those platforms, the clippy and test jobs in `checks.yml` can
-take an `os` matrix.
+Packaging is per platform, around one cargo binary that has no packaging metadata. Linux has
+`linux/` and the `linux` job in `build.yml`, which build AppImages that update from the same
+appcast: see `docs/linux-release.md`. Windows would get a `windows/` directory and a job that
+packages the binary as an MSI or MSIX. Sparkle and the glass UI are `cfg(target_os = "macos")`.
 
 ## Notes
 

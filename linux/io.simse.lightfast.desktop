@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Lightfast
+GenericName=Scanner
+Comment=Scan photos and art on a flatbed scanner
+Exec=lightfast
+Icon=io.simse.lightfast
+Terminal=false
+Categories=Graphics;Scanning;
+Keywords=scan;scanner;photo;flatbed;
+StartupWMClass=io.simse.lightfast
