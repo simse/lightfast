@@ -1,6 +1,6 @@
 # Lightfast
 
-A flatbed photo and art scanner for macOS, built on GPUI, with scanner drivers written in pure safe Rust instead of C SANE.
+A flatbed photo and art scanner for macOS and Linux, built on GPUI, with scanner drivers written in pure safe Rust instead of C SANE.
 
 ## Scanner drivers
 
@@ -80,6 +80,10 @@ If you own one of these scanners, a USB recording from stock SANE would let us r
 The ported crates are derivative works of their SANE backends and keep their licences. Most backends carry the SANE linking exception, which lets Lightfast link them without becoming GPL.
 
 Backends marked as having no exception would make the whole program GPL if linked, so when ported they will build only with the `gpl-backends` feature of the `scan` crate, which is off by default. None of them are ported yet. The licence column comes from each backend's source headers and isn't legal advice.
+
+## Releases
+
+Each release has a DMG for macOS and AppImages for x86_64 and ARM Linux, and both update themselves from the same feed. See `docs/macos-release.md` and `docs/linux-release.md`.
 
 ## Testing
 

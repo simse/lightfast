@@ -16,10 +16,11 @@ missing_errors_doc = "allow"
 name = "lightfast"
 version = "0.1.0"
 edition = "2024"
-description = "Flatbed photo and art scanner for macOS, built on GPUI with pure-Rust scanner drivers."
+description = "Flatbed photo and art scanner for macOS and Linux, built on GPUI with pure-Rust scanner drivers."
 publish = false
 
-# macOS packaging: macos/Lightfast.xcodeproj (see docs/macos-release.md).
+# Packaging: macos/Lightfast.xcodeproj (docs/macos-release.md) and linux/
+# (docs/linux-release.md).
 
 [dependencies]
 anyhow = "1.0.104"
@@ -30,6 +31,8 @@ env_logger = { version = "0.11.11", features = ["kv"] }
 fs4 = "1.1.0"
 gpui = { package = "gpui-pre", version = "=0.3.10" }
 gpui-component = "0.8.1"
+# The component library's icons (check marks, chevrons): only the ~100 it uses.
+gpui-kit-assets = "0.8.1"
 gpui_platform = { version = "=0.3.10", package = "gpui-pre-platform", features = ["font-kit"] }
 image = { version = "0.25", default-features = false, features = ["png", "tiff"] }
 log = { version = "0.4.34", features = ["kv"] }
@@ -47,6 +50,13 @@ objc2-foundation = { version = "0.3.2", default-features = false, features = ["s
 objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGColor", "CGPath"] }
 objc2-quartz-core = { version = "0.3.2", default-features = false, features = ["std", "CALayer", "CAShapeLayer", "CATransaction", "objc2-core-foundation", "objc2-core-graphics"] }
 raw-window-handle = "0.6.2"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+# Only for its features: gpui_platform depends on it without any, which leaves
+# GPUI headless (windows open but never reach the screen). Pinned like it.
+gpui_linux = { package = "gpui-pre-linux", version = "=0.3.10", features = ["wayland", "x11"] }
+# Not on crates.io, so pinned to a release's commit.
+linsparkle ={ git = "https://github.com/medcelerate/LinSparkle", rev = "d04950f25f80d2669cfec4caaaad0fc6871c2c77" }
 
 # Release size: fat LTO + one codegen unit + stripped symbols take the
 # executable from 26.4 MB to 15.7 MB; `opt-level = "z"` gets it to 9.6 MB.

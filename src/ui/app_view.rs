@@ -36,7 +36,17 @@ const FALLBACK_DPI: u32 = 300;
 /// Gap between the canvas edge and the fitted bed, so the bed outline and
 /// corner handles never touch the panels.
 const CANVAS_INSET: f32 = 24.0;
-/// Zoom change per scrolled pixel with ⌘ held: `exp(rate * delta)`, so equal
+/// How hints name the drag that moves an area and the key that deletes a
+/// frame, in each platform's notation.
+#[cfg(target_os = "macos")]
+const MOVE_DRAG: &str = "⌥-drag";
+#[cfg(not(target_os = "macos"))]
+const MOVE_DRAG: &str = "Alt+drag";
+#[cfg(target_os = "macos")]
+const DELETE_KEY: &str = "⌫";
+#[cfg(not(target_os = "macos"))]
+const DELETE_KEY: &str = "Delete";
+/// Zoom change per scrolled pixel with ⌘ (Ctrl elsewhere) held: `exp(rate * delta)`, so equal
 /// scroll distances give equal zoom ratios in both directions.
 const SCROLL_ZOOM_RATE: f64 = 0.01;
 /// Side length of the selection's corner handles.
@@ -285,7 +295,10 @@ impl AppView {
             Event::Thumb(img) => self.set_image(&img, self.activity == Activity::Previewing),
             Event::PreviewDone(img) => {
                 self.set_image(&img, true);
-                self.finish("Preview ready. Drag on the image to choose the scan area (⌥-drag to move it).".into());
+                self.finish(
+                    format!("Preview ready. Drag on the image to choose the scan area ({MOVE_DRAG} to move it).")
+                        .into(),
+                );
             }
             Event::Saved(paths) => {
                 let msg = match paths.as_slice() {
@@ -577,17 +590,16 @@ impl AppView {
         }
     }
 
+    /// The opaque title bar. Outside macOS it holds the menu bar, whose
+    /// first menu already names the app.
     fn render_title_bar(&mut self, cx: &mut Context<Self>) -> impl IntoElement {
-        let theme = cx.theme();
-        TitleBar::new().child(
-            h_flex()
-                .flex_1()
-                .pr_2()
-                .gap_2()
-                .text_sm()
-                .child(div().font_weight(FontWeight::MEDIUM).child("Lightfast"))
-                .child(div().text_color(theme.muted_foreground).child(self.scanner_name())),
-        )
+        let row = h_flex().flex_1().pr_2().gap_2().text_sm();
+        #[cfg(target_os = "macos")]
+        let row = row.child(div().font_weight(FontWeight::MEDIUM).child("Lightfast"));
+        #[cfg(not(target_os = "macos"))]
+        let row = row.child(menu::bar(cx));
+        let muted = cx.theme().muted_foreground;
+        TitleBar::new().child(row.child(div().text_color(muted).child(self.scanner_name())))
     }
 
     /// The toolbar beside the floating sidebar: Tahoe's title and subtitle
@@ -1217,10 +1229,9 @@ impl AppView {
         });
 
         let list = if frames.is_empty() {
-            div()
-                .text_sm()
-                .text_color(muted)
-                .child("Drag on the bed to add a frame. ⌥-drag moves one; ⌫ deletes the selected frame.")
+            div().text_sm().text_color(muted).child(format!(
+                "Drag on the bed to add a frame. {MOVE_DRAG} moves one; {DELETE_KEY} deletes the selected frame."
+            ))
         } else {
             v_flex().gap_1().children(rows)
         };
@@ -1265,10 +1276,10 @@ impl AppView {
                     cx.notify();
                 }),
             )
-            // ⌘+scroll zooms around the cursor; plain scroll pans.
+            // ⌘+scroll (Ctrl elsewhere) zooms around the cursor; plain scroll pans.
             .on_scroll(cx.listener(|this, e: &ScrollEvent, window, cx| {
                 let delta = e.delta.pixel_delta(window.line_height());
-                if e.modifiers.platform {
+                if e.modifiers.secondary(cx) {
                     this.preview.zoom_at((f64::from(delta.y) * SCROLL_ZOOM_RATE).exp(), e.position);
                 } else {
                     this.preview.pan_by(delta);

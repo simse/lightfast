@@ -1,4 +1,4 @@
-//! The macOS menu bar.
+//! The menu bar: the system's on macOS, drawn in the title bar elsewhere.
 
 use gpui::{App, Menu, MenuItem};
 
@@ -9,7 +9,7 @@ use crate::updater;
 ///
 /// Called at startup and again on every mode switch, since a menu item's
 /// check mark is fixed when the menu is built.
-pub fn set(cx: &App, multi: bool) {
+pub fn set(cx: &mut App, multi: bool) {
     let mut app_items = Vec::with_capacity(3);
     if updater::available(cx) {
         app_items.push(MenuItem::action("Check for Updates…", CheckForUpdates));
@@ -36,4 +36,42 @@ pub fn set(cx: &App, multi: bool) {
             disabled: false,
         },
     ]);
+    #[cfg(not(target_os = "macos"))]
+    in_window::reload(cx);
+}
+
+#[cfg(not(target_os = "macos"))]
+pub use in_window::bar;
+
+/// GPUI has no global menu bar outside macOS: it only keeps the menus, which
+/// the component library's `AppMenuBar` draws in the window's title bar.
+#[cfg(not(target_os = "macos"))]
+mod in_window {
+    use gpui::{App, Entity, Global};
+    use gpui_component::GlobalState;
+    use gpui_component::menu::AppMenuBar;
+
+    /// The one window's menu bar.
+    struct Bar(Entity<AppMenuBar>);
+
+    impl Global for Bar {}
+
+    /// The menu bar to put in the title bar, showing the menus last [`set`](super::set).
+    pub fn bar(cx: &mut App) -> Entity<AppMenuBar> {
+        if let Some(Bar(bar)) = cx.try_global::<Bar>() {
+            return bar.clone();
+        }
+        let bar = AppMenuBar::new(cx);
+        cx.set_global(Bar(bar.clone()));
+        bar
+    }
+
+    /// Hands the menus GPUI keeps to the menu bar.
+    pub(super) fn reload(cx: &mut App) {
+        let menus = cx.get_menus().unwrap_or_default();
+        GlobalState::global_mut(cx).set_app_menus(menus);
+        if let Some(Bar(bar)) = cx.try_global::<Bar>() {
+            bar.clone().update(cx, AppMenuBar::reload);
+        }
+    }
 }

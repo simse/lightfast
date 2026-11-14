@@ -20,8 +20,9 @@ env:
   CARGO_PROFILE_DEV_DEBUG: '0'
 
 # rustup installs the toolchain pinned in rust-toolchain.toml. Every check runs
-# on Ubuntu ARM. Code behind cfg(target_os = "macos") is only compiled by the
-# tagged macOS build in build.yml.
+# on Ubuntu ARM, which also covers the Linux-only code. Code behind
+# cfg(target_os = "macos") is only compiled by the tagged macOS build in
+# build.yml.
 jobs:
   rustfmt:
     name: rustfmt
