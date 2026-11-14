@@ -90,7 +90,7 @@ fn numbered(path: &Path, i: usize, n: usize) -> PathBuf {
         return path.to_owned();
     }
     let stem = path.file_stem().unwrap_or_default().to_string_lossy();
-    let ext = path.extension().map(|e| format!(".{}", e.to_string_lossy())).unwrap_or_default();
+    let ext = path.extension().map_or_default(|e| format!(".{}", e.to_string_lossy()));
     path.with_file_name(format!("{stem}-{i}{ext}"))
 }
 

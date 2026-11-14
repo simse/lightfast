@@ -16,13 +16,13 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
 
-# rustup installs the toolchain pinned in rust-toolchain.toml. clippy and test
-# run on macOS, since GPUI only builds there for now. Once it builds on Linux
-# and Windows, give them an `os` matrix.
+# rustup installs the toolchain pinned in rust-toolchain.toml. Every check runs
+# on Ubuntu ARM. Code behind cfg(target_os = "macos") is only compiled by the
+# tagged macOS build in build.yml.
 jobs:
   rustfmt:
     name: rustfmt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04-arm
     timeout-minutes: 10
     steps:
       - name: checkout
@@ -38,13 +38,21 @@ jobs:
 
   clippy:
     name: clippy
-    runs-on: xcode-27
+    runs-on: ubuntu-26.04-arm
     timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # GPUI's Linux platform links against these.
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libx11-xcb-dev \
+            libvulkan-dev libfontconfig-dev libfreetype-dev
 
       - name: install rust
         run: rustup toolchain install
@@ -60,13 +68,21 @@ jobs:
 
   test:
     name: test
-    runs-on: xcode-27
+    runs-on: ubuntu-26.04-arm
     timeout-minutes: 30
     steps:
       - name: checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      # GPUI's Linux platform links against these.
+      - name: install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libx11-xcb-dev \
+            libvulkan-dev libfontconfig-dev libfreetype-dev
 
       - name: install rust
         run: rustup toolchain install

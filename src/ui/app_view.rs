@@ -872,9 +872,7 @@ impl AppView {
                 if frames.len() == 1 { "" } else { "s" },
                 human_bytes(total_raw_bytes(frames, self.dpi, pixel))
             ),
-            (false, frames) => {
-                frames.first().map(|&a| Estimate::new(a, self.dpi, pixel).to_string()).unwrap_or_default()
-            }
+            (false, frames) => frames.first().map_or_default(|&a| Estimate::new(a, self.dpi, pixel).to_string()),
         };
         // On glass a translucent well lets the material read through.
         let (border, bg) = if glass::active(cx) {
