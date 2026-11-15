@@ -70,8 +70,12 @@ fn guid(seed: &str) -> String {
     format!("{{{}}}", Uuid::new_v5(&UPGRADE_CODE, seed.as_bytes()).hyphenated()).to_uppercase()
 }
 
+/// A string cell. Windows Installer has no empty strings, only null: the
+/// msi crate would store `""` as a zero-length string-pool entry, which
+/// Windows reads as the start of a long string and then reports the pool as
+/// corrupted.
 pub fn s(value: &str) -> Value {
-    Value::Str(value.to_owned())
+    if value.is_empty() { Value::Null } else { Value::Str(value.to_owned()) }
 }
 
 pub fn n(value: i32) -> Value {
@@ -409,7 +413,7 @@ pub fn build(input: &Input, out: &Path) -> anyhow::Result<()> {
         &mut package,
         "CustomAction",
         vec![key("Action", 72), i16_("Type"), id_opt("Source", 72), text_opt("Target", 255)],
-        vec![vec![s(ui::LAUNCH_ACTION), n(18 + 192), s("LightfastExe"), s("")]],
+        vec![vec![s(ui::LAUNCH_ACTION), n(18 + 192), s("LightfastExe"), Value::Null]],
     )?;
 
     let mut execute: Vec<(&str, Option<&str>, i32)> = COSTING.iter().map(|&(a, n)| (a, None, n)).collect();
