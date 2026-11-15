@@ -13,8 +13,8 @@ from the same appcast as the macOS app.
 - `linux/io.simse.lightfast.desktop`, `.png` and `.metainfo.xml`: the desktop entry, icon and
   AppStream metadata. The id is the macOS bundle identifier; the app passes it to Wayland as its
   `app_id` so the window gets this icon and name. The icon is rendered from `assets/Lightfast.icon`.
-- `linux/add-to-appcast.py`: adds the Linux update to the appcast `generate_appcast` wrote for
-  the DMG.
+- `scripts/add-to-appcast.py`: adds the Linux update to the appcast `generate_appcast` wrote for
+  the DMG (and, from the same release job, the Windows ones: see `docs/windows-release.md`).
 
 ## Differences from macOS
 
@@ -110,7 +110,8 @@ LIGHTFAST_BUILD=1 linux/build-appimage.sh build/old
 LIGHTFAST_BUILD=2 linux/build-appimage.sh build/new
 # Put build/new's AppImage in a tarball as the release job does, sign it with
 #   openssl pkeyutl -sign -inkey test.pem -rawin -in <tarball> | base64 -w0
-# add it to an appcast with linux/add-to-appcast.py, serve the directory on
+# add it to an appcast with scripts/add-to-appcast.py (--os linux --type
+# application/gzip), serve the directory on
 # port 8765 and run build/old's AppImage.
 ```
 

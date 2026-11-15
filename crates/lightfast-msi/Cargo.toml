@@ -1,0 +1,15 @@
+[package]
+name = "lightfast-msi"
+version = "0.1.0"
+edition = "2024"
+description = "Builds Lightfast's Windows installer (MSI) from the release executable and WinSparkle.dll, on any platform."
+publish = false
+
+[dependencies]
+anyhow = "1.0.104"
+cab = "0.6.0"
+msi = "0.10.0"
+uuid = { version = "1.29.0", features = ["v5"] }
+
+[lints]
+workspace = true
