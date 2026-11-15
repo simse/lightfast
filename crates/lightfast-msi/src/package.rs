@@ -12,7 +12,7 @@ use std::io::{self, Cursor, Seek, Write};
 use std::path::Path;
 
 use anyhow::{Context as _, bail, ensure};
-use msi::{Category, Column, Insert, Language, Package, PackageType, Value};
+use msi::{Category, CodePage, Column, Insert, Language, Package, PackageType, Value};
 use uuid::Uuid;
 
 use crate::{Input, ui};
@@ -167,7 +167,12 @@ pub fn build(input: &Input, out: &Path) -> anyhow::Result<()> {
     let product_code = guid(&format!("product/{}/{}/{}", input.version, arch.name(), digest(&files)?));
     let package_code = guid(&format!("package/{product_code}"));
 
+    // The msi crate defaults to UTF-8 (65001), which Windows Installer
+    // doesn't accept as a database code page: it refuses to open the
+    // package (error 1620). Every string here is ASCII.
+    package.set_database_codepage(CodePage::Windows1252);
     let summary = package.summary_info_mut();
+    summary.set_codepage(CodePage::Windows1252);
     summary.set_title("Installation Database");
     summary.set_subject("Lightfast");
     summary.set_author(MANUFACTURER);

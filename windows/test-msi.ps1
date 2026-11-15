@@ -63,6 +63,20 @@ function Uncheck([string] $name) {
     if ($toggle.Current.ToggleState -eq [Windows.Automation.ToggleState]::On) { $toggle.Toggle() }
 }
 
+Write-Host '== open the database'
+# Windows Installer's own reader explains a malformed package better than
+# msiexec's bare exit code.
+$windowsInstaller = New-Object -ComObject WindowsInstaller.Installer
+$database = $windowsInstaller.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $windowsInstaller, @($Msi, 0))
+foreach ($property in 'ProductName', 'ProductVersion', 'ProductCode') {
+    $view = $database.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $database,
+        @("SELECT ``Value`` FROM ``Property`` WHERE ``Property`` = '$property'"))
+    $view.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $view, $null) | Out-Null
+    $record = $view.GetType().InvokeMember('Fetch', 'InvokeMethod', $null, $view, $null)
+    Write-Host "$property = $($record.GetType().InvokeMember('StringData', 'GetProperty', $null, $record, 1))"
+}
+[Runtime.InteropServices.Marshal]::ReleaseComObject($database) | Out-Null
+
 Write-Host '== install through the dialogs'
 $log = Join-Path $logs 'install-ui.log'
 $installer = Start-Process msiexec.exe -ArgumentList @('/i', "`"$Msi`"", '/l*v', "`"$log`"") -PassThru
