@@ -452,11 +452,38 @@ pub fn build(input: &Input, out: &Path) -> anyhow::Result<()> {
     let cabinet = cabinet.finish()?.into_inner();
     package.write_stream(CABINET)?.write_all(&cabinet)?;
 
-    let bytes = package.into_inner()?.into_inner();
+    let bytes = compound_file_v3(&package.into_inner()?.into_inner())?;
     let part = out.with_extension("msi.part");
     fs::write(&part, bytes).with_context(|| format!("couldn't write {}", part.display()))?;
     fs::rename(&part, out)?;
     Ok(())
+}
+
+/// Rewrites a compound file as version 3, with 512-byte sectors.
+///
+/// The `msi` crate writes version 4 (4096-byte sectors), which msitools
+/// reads but Windows Installer refuses to open (error 1620). Every MSI that
+/// Microsoft's tools and `WiX` make is version 3.
+fn compound_file_v3(bytes: &[u8]) -> anyhow::Result<Vec<u8>> {
+    let mut source = cfb::CompoundFile::open(Cursor::new(bytes))?;
+    let mut dest = cfb::CompoundFile::create_with_version(cfb::Version::V3, Cursor::new(Vec::new()))?;
+    let entries: Vec<_> = source.walk().collect();
+    for entry in entries {
+        let path = entry.path();
+        if entry.is_storage() {
+            if path != Path::new("/") {
+                dest.create_storage(path)?;
+            }
+            dest.set_storage_clsid(path, *entry.clsid())?;
+        } else {
+            io::copy(&mut source.open_stream(path)?, &mut dest.create_stream(path)?)?;
+        }
+        if entry.state_bits() != 0 {
+            dest.set_state_bits(path, entry.state_bits())?;
+        }
+    }
+    dest.flush()?;
+    Ok(dest.into_inner().into_inner())
 }
 
 /// Adds a sequence table: actions with their conditions and order.
