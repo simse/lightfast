@@ -255,8 +255,10 @@ jobs:
     name: windows (${{ matrix.arch }})
     needs: version
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
+      # Let each architecture finish, so one failing doesn't hide the other.
+      fail-fast: false
       matrix:
         include:
           - arch: x64
@@ -290,10 +292,9 @@ jobs:
           fi
           rustup toolchain install
 
-      - name: sccache
-        uses: ./.github/actions/sccache
-        with:
-          redis-url: ${{ secrets.REDIS_URL }}
+      # No sccache: it spawns rustc without cargo's argument file, and the
+      # `--check-cfg` lists of gpui-component and gpui-base go past Windows'
+      # 32K command-line limit (os error 206).
 
       # The lockfile records the package's version too, and the build is
       # --locked.

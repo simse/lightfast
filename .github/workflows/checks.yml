@@ -85,10 +85,7 @@ jobs:
       - name: install rust
         run: rustup toolchain install
 
-      - name: sccache
-        uses: ./.github/actions/sccache
-        with:
-          redis-url: ${{ secrets.REDIS_URL }}
+      # No sccache: see the windows job in build.yml.
 
       - name: clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings
