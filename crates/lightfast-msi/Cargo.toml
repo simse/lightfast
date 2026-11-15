@@ -9,8 +9,8 @@ publish = false
 anyhow = "1.0.104"
 cab = "0.6.0"
 # Only to rewrite the msi crate's output as a version 3 compound file.
-cfb = "0.14.0"
-msi = "0.10.0"
+cfb = "0.16.0"
+msi = "0.11.0"
 uuid = { version = "1.29.0", features = ["v5"] }
 
 [lints]

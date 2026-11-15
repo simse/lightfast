@@ -12,7 +12,7 @@ use std::io::{self, Cursor, Seek, Write};
 use std::path::Path;
 
 use anyhow::{Context as _, bail, ensure};
-use msi::{Category, CodePage, Column, Insert, Language, Package, PackageType, Value};
+use msi::{Category, CodePage, Column, Insert, LanguageId, Package, PackageType, Value};
 use uuid::Uuid;
 
 use crate::{Input, ui};
@@ -180,7 +180,7 @@ pub fn build(input: &Input, out: &Path) -> anyhow::Result<()> {
     summary.set_keywords(&["Installer".to_owned()]);
     summary.set_creating_application("lightfast-msi");
     summary.set_arch(arch.platform());
-    summary.set_languages(&[Language::from_code(LANGUAGE)]);
+    summary.set_languages(&[LanguageId::from_id(LANGUAGE)]);
     summary.set_uuid(Uuid::parse_str(package_code.trim_matches(['{', '}']))?);
     summary.set_page_count(arch.schema());
     summary.set_word_count(WORD_COUNT_COMPRESSED);
