@@ -20,9 +20,9 @@ env:
   CARGO_PROFILE_DEV_DEBUG: '0'
 
 # rustup installs the toolchain pinned in rust-toolchain.toml. Every check runs
-# on Ubuntu ARM, which also covers the Linux-only code. Code behind
-# cfg(target_os = "macos") is only compiled by the tagged macOS build in
-# build.yml.
+# on Ubuntu ARM, which also covers the Linux-only code; `clippy (windows)`
+# covers the Windows-only code. Code behind cfg(target_os = "macos") is only
+# compiled by the tagged macOS build in build.yml.
 jobs:
   rustfmt:
     name: rustfmt
@@ -65,6 +65,27 @@ jobs:
         uses: ./.github/actions/sccache
         with:
           redis-url: ${{ secrets.REDIS_URL }}
+
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+
+  clippy-windows:
+    name: clippy (windows)
+    runs-on: windows-2025
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: install rust
+        run: rustup toolchain install
+
+      # No sccache: see the windows job in build.yml.
 
       - name: clippy
         run: cargo clippy --workspace --all-targets --locked -- -D warnings

@@ -16,11 +16,11 @@ missing_errors_doc = "allow"
 name = "lightfast"
 version = "0.1.0"
 edition = "2024"
-description = "Flatbed photo and art scanner for macOS and Linux, built on GPUI with pure-Rust scanner drivers."
+description = "Flatbed photo and art scanner for macOS, Linux and Windows, built on GPUI with pure-Rust scanner drivers."
 publish = false
 
-# Packaging: macos/Lightfast.xcodeproj (docs/macos-release.md) and linux/
-# (docs/linux-release.md).
+# Packaging: macos/Lightfast.xcodeproj (docs/macos-release.md), linux/
+# (docs/linux-release.md) and windows/ (docs/windows-release.md).
 
 [dependencies]
 anyhow = "1.0.104"
@@ -42,6 +42,11 @@ png = "0.18.1"
 scan = { path = "crates/scan" }
 tiff = "0.11.3"
 
+[build-dependencies]
+# The Windows executable's icon, which Explorer and the taskbar show. Does
+# nothing for other targets.
+embed-resource = "3.0.12"
+
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.5"
 objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSResponder", "NSView", "NSWindow", "NSGraphics", "NSAppearance", "NSButton", "NSButtonCell", "NSCell", "NSControl", "NSGlassEffectView", "NSLayoutConstraint", "NSMenu", "NSMenuItem", "NSPopUpButton", "NSSegmentedControl", "NSSlider", "NSVisualEffectView", "objc2-core-foundation", "objc2-quartz-core"] }
@@ -50,6 +55,12 @@ objc2-foundation = { version = "0.3.2", default-features = false, features = ["s
 objc2-core-graphics = { version = "0.3.2", default-features = false, features = ["std", "CGColor", "CGPath"] }
 objc2-quartz-core = { version = "0.3.2", default-features = false, features = ["std", "CALayer", "CAShapeLayer", "CATransaction", "objc2-core-foundation", "objc2-core-graphics"] }
 raw-window-handle = "0.6.2"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Loads WinSparkle.dll at runtime, so the executable has no link-time
+# dependency on it and runs without it (as `cargo run` does).
+libloading = "0.8.9"
+
 
 [target.'cfg(target_os = "linux")'.dependencies]
 # Only for its features: gpui_platform depends on it without any, which leaves

@@ -1,5 +1,8 @@
 //! Lightfast: a flatbed photo/art scanner.
 
+// Release builds on Windows are GUI programs, with no console window.
+#![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
+
 mod ui;
 mod updater;
 

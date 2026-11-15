@@ -1,6 +1,6 @@
 # Lightfast
 
-A flatbed photo and art scanner for macOS and Linux, built on GPUI, with scanner drivers written in pure safe Rust instead of C SANE.
+A flatbed photo and art scanner for macOS, Linux and Windows, built on GPUI, with scanner drivers written in pure safe Rust instead of C SANE.
 
 ## Scanner drivers
 
@@ -83,7 +83,7 @@ Backends marked as having no exception would make the whole program GPL if linke
 
 ## Releases
 
-Each release has a DMG for macOS and AppImages for x86_64 and ARM Linux, and both update themselves from the same feed. See `docs/macos-release.md` and `docs/linux-release.md`.
+Each release has a DMG for macOS, AppImages for x86_64 and ARM Linux, and MSIs for x64 and ARM Windows, and all of them update themselves from the same feed. See `docs/macos-release.md`, `docs/linux-release.md` and `docs/windows-release.md`.
 
 ## Testing
 
